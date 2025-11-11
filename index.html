@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>แบบทดสอบการขายประกันทางโทรศัพท์ (FINAL STABLE VERSION - BATCH UPLOAD/FIXED FLOW)</title>
+    <title>E-Simulator Roleplay (ประกันสุขภาพ - FIXED S1-Q9 FINALE & BATCH UPLOAD)</title>
     
     <style>
         /* 1. สไตล์ที่ถูกปรับขนาด (NEW) */
@@ -125,7 +125,7 @@
     </div>
 
     <div class="container-box">
-        <h1>E-Simulator Roleplay (Fixed Flow)</h1>
+        <h1>E-Simulator Roleplay (ประกันสุขภาพ)</h1>
         
         <div id="registrationSection">
             <h2 style="color: #333;">📝 หน้าลงทะเบียนและตั้งค่าแบบทดสอบ</h2>
@@ -157,6 +157,7 @@
             </button>
             <hr>
         </div>
+        
         <div id="testSection" style="display: none;">
             
             <div id="section1Div">
@@ -168,7 +169,7 @@
                 <hr>
             </div>
 
-            <div id="section1_5Div">
+            <div id="section1_5Div" style="display: none;">
                 <h2>🛒 ช่วงที่ 1.5: การนำเสนอผลิตภัณฑ์ (Pitch)</h2>
                 <button disabled id="pitchRecordBtn">🎙️ เริ่มบันทึกเสียงนำเสนอ</button>
                 <button disabled id="nextSection2Btn">✅ จบบทที่ 1.5 (ไปช่วงที่ 2)</button>
@@ -176,7 +177,7 @@
                 <hr>
             </div>
 
-            <div id="section2Div">
+            <div id="section2Div" style="display: none;">
                 <h2>❓ ช่วงที่ 2: ตอบคำถามลูกค้า (รอบที่ <span id="qRound">1</span>/<span id="maxQSpan">10</span>)</h2>
                 <audio id="questionAudio"></audio>
                 <button disabled id="startQBtn">🔊 เริ่มคำถามลูกค้า</button>
@@ -186,7 +187,7 @@
                 <hr>
             </div>
 
-            <div id="section3Div">
+            <div id="section3Div" style="display: none;">
                 <h2>💰 ช่วงที่ 3: ปิดการขาย + ข้อโต้แย้ง (รอบที่ <span id="cRound">1</span>/<span id="maxCSpan">5</span>)</h2>
                 <button disabled id="closeBtn">🎙️ 1. บันทึกสคริปต์ปิดการขาย</button>
                 <audio id="objectionAudio"></audio>
@@ -196,20 +197,20 @@
                 <hr>
             </div>
 
-            <div id="section4Div">
-                <h2>🏥 ช่วงที่ 4: คำถามสุขภาพ (<span id="hQName">คำถามหลัก Q1/1</span>)</h2>
+            <div id="section4Div" style="display: none;">
+                <h2>🏥 ช่วงที่ 4: คำถามสุขภาพ (<span id="hQName">คำถามที่ 1/5: โรคสำคัญ</span>)</h2>
                 
                 <div id="healthQuestionDisplay" style="margin: 15px 0; padding: 15px; border: 1px dashed #d9534f; border-radius: 8px; background-color: #ffeaea; font-weight: bold; font-size: 18px; color: #333;">
                     <p>คำถามหลัก: ใน 5 ปีที่ผ่านมา ท่านเคยได้รับการบาดเจ็บ เจ็บป่วย หรือเข้ารับการรักษาตัวในโรงพยาบาลหรือไม่?</p>
                 </div>
                 <audio id="healthAudio"></audio>
-                <button disabled id="answerHBtn">🎙️ 1. บันทึกคำถามสุขภาพหลัก</button>
+                <button disabled id="answerHBtn">🎙️ 1. บันทึกคำถามสุขภาพ</button>
                 <button disabled id="nextSection5Btn">✅ จบบทที่ 4 (ไปช่วงที่ 5)</button>
                 <p id="hStatus">รอเริ่มช่วงที่ 4</p>
                 <hr>
             </div>
 
-            <div id="section5Div">
+            <div id="section5Div" style="display: none;">
                 <h2>🤝 ช่วงที่ 5: ลงทะเบียนลูกค้า (ขั้นตอนที่ <span id="aRound">1</span>/<span id="maxASpan">7</span>)</h2>
                 <audio id="agreementAudio"></audio>
                 
@@ -218,8 +219,7 @@
                     <ol id="stepList" style="padding-left: 20px; font-size: 16px;">
                         </ol>
                 </div>
-                <button disabled id="startABtn" style="display: none;">🔊 เริ่มขั้นตอนการลงทะเบียน</button> 
-                <button disabled id="answerABtn">🎙️ บันทึกคำถามลงทะเบียน</button>
+                <button disabled id="answerABtn">🎙️ บันทึกคำถามลงทะเบียน</button> 
                 <button disabled id="finalSaveBtn">💾 บันทึกการทดสอบเสร็จสิ้น</button>
                 <p id="aStatus">รอเริ่มช่วงที่ 5</p>
                 <hr>
@@ -260,18 +260,18 @@
         let turn = 0;
         let qRound = 0;
         let cRound = 0;
-        let currentHIndex = 0; 
+        let currentHIndex = 0; // S4 Question Index (0 to maxH - 1)
         let isFollowUpMode = false;
-        let followUpStep = 0; 
+        let followUpStep = 0; // S4 Follow-up Step (1 to maxFollowUp)
         let selectedDisease = null;
-        let aRound = 0; 
+        let aRound = 0; // S5 Step (1 to maxA)
 
         // Global Max Rounds 
         let maxTurns;
         let maxQ;
         let maxC;
-        let maxH = 5; // Fixed at 5 questions for S4
-        let maxFollowUp = 5; 
+        let maxH = 5; // Fixed at 5 questions for S4 (Based on original health flow)
+        let maxFollowUp = 5; // Fixed at 5 follow-up questions
         let maxA; 
         
         // Difficulty Configurations 
@@ -281,60 +281,61 @@
             harder: { S1: 10, S2: 10, S3: 10, S4: 5, S5: 7, label: "ยากขึ้น (Harder)" } 
         };
 
-        // --- 2. Audio Files URL ---
+        // --- 2. Audio Files URL (ใช้ชุดไฟล์จากโค้ดประกันสุขภาพเดิม) ---
         let audioCache = {};
 
-        // S1: เปิดตัว/โต้ตอบต้นสาย (ไฟล์เสียงลูกค้า)
+        // S1: เปิดตัว/โต้ตอบต้นสาย (URL จาก Test.thml.txt)
         const allCustomerReplies = [
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s1_1.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s1_2.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s1_3.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s1_4.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s1_5.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s1_6.m4a", // Index 5: THE FIXED FINALE FILE
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s1_7.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s1_8.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s1_9.m4a"
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q1_fe75e00d-70f8-429a-806f-ae77f5cde2de.webm", // Index 0
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q2_a68fb010-ec6c-47c2-95b2-d839553fe4e7.webm", // Index 1
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q3_d974acce-1bc1-4473-a9f6-d49a256636ab.webm", // Index 2
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q4_c3dd3875-fac4-4ad0-96d7-31adf9175c69.webm", // Index 3
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q5_60ca36aa-3425-4824-987a-ff6b7fd7dbe1.webm", // Index 4
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q7_490b0134-6446-4708-b86c-785d31306d07.webm", // Index 5
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q8_ad281257-c3b9-44dd-8ca5-0f383d438003.webm", // Index 6
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q9_36918038-0a42-4b6b-afc6-048a619f589d.webm", // Index 7
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q10_68208219-7f94-48be-8446-d296d03711a3.webm", // Index 8 (NEW FINALE: Q9)
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q6_75f89f58-d31d-4edb-a47d-901d0dfc92d4.webm" // Index 9 (Original finale location)
         ];
-        // S2: ตอบคำถามลูกค้า (ไฟล์เสียงลูกค้า)
+        // S2: ตอบคำถามลูกค้า (URL จาก Test.thml.txt)
         const questionFiles = [
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s2_1.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s2_2.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s2_3.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s2_4.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s2_5.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s2_6.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s2_7.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s2_8.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s2_9.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s2_10.m4a" 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part2/q1_426c99f9-e6cc-45d9-995a-04ea50effbea.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part2/q2_512d6ed6-44bd-446b-a12b-8d664dfa6b68.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part2/q3_2ba969e1-7421-41b9-823b-b6115eaf4711.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part2/q4_52a4b384-ccd6-4e6c-86ef-e2b33f9a7c7e.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part2/q5_36097a2d-20e3-4fef-bcf9-807076a90e3b.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part2/q6_3dee5223-9b49-4976-93fa-7b0ed28b111e.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part2/q7_e3bd2454-ca23-4519-bc65-503a28d5b27a.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part2/q8_681b20de-322f-4fc6-8b50-ecd37e265ea6.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part2/q9_a270c910-9a77-42a0-a2cc-7eaab6044f08.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part2/q10_ed542cc5-bf90-4326-b296-21b88ef6334d.webm" 
         ];
-        // S3: ข้อโต้แย้ง (ไฟล์เสียงลูกค้า)
+        // S3: ข้อโต้แย้ง (URL จาก Test.thml.txt)
         const objectionFiles = [
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s3_1.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s3_2.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s3_3.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s3_4.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s3_5.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s3_6.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s3_7.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s3_8.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s3_9.m4a", 
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s3_10.m4a"
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q1_cc419767-be8d-4131-a96c-9ebd05e17c0f.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q2_6c651abe-e8ce-4cc9-9393-4e8e3c0ab007.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q3_6eb4b44a-a1cb-42ff-a48e-12ecd0105b16.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q4_f6cfdb31-8c1a-4a10-9eaa-31adeff615bb.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q5_b126f965-079b-4f50-8818-4ea124cded47.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q6_6e6df3ec-2a70-44b9-ba6d-0f28f6650c51.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q7_1bd79b02-b363-4004-80f4-fcc2936fe8ec.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q8_0cca5181-e7e9-4635-914b-050430144c8c.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q9_36918038-0a42-4b6b-afc6-048a619f589d.webm", 
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q10_fbba463f-b3a5-4671-a018-006d457ccd6b.webm"
         ];
         
-        // --- SECTION 5: Registration Steps (7 Steps) ---
+        // --- SECTION 5: Registration Steps (7 Steps) (URL จาก Test.thml.txt) ---
         const REGISTRATION_STEPS = 7; 
-        // NOTE: registrationScriptFiles คือ ANSWER ของลูกค้า ต่อ PROMPT ของพนักงาน
         const registrationScriptFiles = [
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s4_1.m4a", // Step 1: ขอสะกดชื่อ-นามสกุล
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s5_Birthday.m4a", // Step 2: ขอวันเดือนปีเกิด
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s4_2.m4a", // Step 3: สอบถามที่อยู่
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s4_3.m4a", // Step 4: ขอเบอร์มือถือ
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s4_4.m4a", // Step 5: ผู้รับประโยชน์
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s4_5.m4a", // Step 6: ลูกค้ายินยอม PDPA
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s4_6.m4a" // Step 7: ลูกค้าพูดว่า 'ตกลงซื้อประกัน'
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q2/health6_P1_P1Q2_1762518493530.webm", // Step 1: ขอสะกดชื่อ-นามสกุล
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q3/health6_P1_P1Q3_1762518514882.webm", // Step 2: ขอวันเดือนปีเกิด (เดิมคือเลขบัตร)
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q4/health6_P1_P1Q4_1762518543370.webm", // Step 3: สอบถามที่อยู่ (เดิมคือเบอร์มือถือ)
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q5/health6_P1_P1Q5_1762518584458.webm", // Step 4: ขอเบอร์มือถือ (เดิมคือที่อยู่)
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q6/health6_P1_P1Q6_1762518625330.webm", // Step 5: ผู้รับประโยชน์ (เดิมคือช่องทางการชำระ)
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q7/health6_P1_P1Q7_1762518654346.webm", // Step 6: ลูกค้ายินยอม PDPA
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q8/health6_P1_P1Q8_1762518676715.webm"  // Step 7: ลูกค้าพูดว่า 'ตกลงซื้อประกัน'
         ];
+        // NOTE: ใช้ชื่อขั้นตอนจากโค้ดเดิมที่ถูกต้อง
         const registrationStepNames = [
             "1. ขอสะกดชื่อ-นามสกุล", 
             "2. ขอวันเดือนปีเกิด", 
@@ -343,10 +344,9 @@
             "5. ผู้รับประโยชน์", 
             "6. ลูกค้ายินยอมให้บริษัทBเก็บรวบรวมใช้ข้อมูลเพื่อการออกกรมธรรม์และทำการตลาดนะครับตกลงหรือโอเคก็ได้ครับ",
             "7. เพื่อเป็นการตอบรับโครงการ รบกวนลูกค้าพูดคำว่า ตกลงซื้อประกัน ให้ด้วยครับ"
-
         ];
 
-        // --- Section 4 Dynamic Health Check Data (FIXED TO 'ความดันสูง' FOR YES) ---
+        // --- Section 4 Dynamic Health Check Data (URL/Data จาก Test.thml.txt) ---
         const H_QUESTION_NAMES = [
             "1. โรคสำคัญ (หัวใจ, มะเร็ง ฯลฯ)", "2. ประวัติผ่าตัด/รักษาตัว", "3. อาการผิดปกติทั่วไป",
             "4. ประวัติบริษัทอื่น", "5. การใช้สารเสพติด"
@@ -360,8 +360,7 @@
         // Data structure for the fixed health check flow
         const H_DISEASE_DATA = [
             {
-                name: "ความดันสูง", // FIXED DISEASE (Index 0)
-                // S4 Q4 (Index 3) Answer: YES Trigger URL
+                name: "ความดันสูง", 
                 yesTriggerUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q1_9f79f14f-6b49-4215-a8d2-6c290175845c.webm", 
                 followUpReplies: [ 
                     "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q2_7a0089f6-fad2-4264-84dc-e4a9fd76bf9d.webm", 
@@ -372,10 +371,12 @@
                 ]
             }
         ];
-        const NO_ANSWER_URL = "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/s4_No.m4a"; // URL for fixed NO reply
+        // URL for fixed NO reply 
+        const NO_ANSWER_URL = "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q3/health5_P1_P1Q3_1762340907852.webm"; 
 
         // --- Utility Functions ---
         let selectedRandomFiles = []; // Used as Sequential Files for S1
+
 
         // ** MODIFIED: preloadCriticalAudio to preload ALL customer audio files for all 5 sections **
         window.preloadCriticalAudio = function() {
@@ -383,9 +384,9 @@
             const s2Urls = questionFiles; 
             const s3Urls = objectionFiles; 
             
-            // S4: Fixed disease 'ความดันสูง' (Index 0) และคำถามซักประวัติทั้งหมด
+            // S4: Fixed disease 'ความดันสูง' และคำถามซักประวัติทั้งหมด
             const s4Urls = [
-                NO_ANSWER_URL, // Fixed NO reply
+                NO_ANSWER_URL, 
                 H_DISEASE_DATA[0].yesTriggerUrl, 
                 ...H_DISEASE_DATA[0].followUpReplies
             ];
@@ -407,19 +408,16 @@
             console.log("Preloading started. The test can proceed without network delays for customer audio.");
         }
 
-        // ** MODIFIED: prepareTurnFiles for FIXED FINALE S1-6 **
+        // ** MODIFIED: prepareTurnFiles for FIXED FINALE S1-Q9 (Index 8) **
         window.prepareTurnFiles = function() {
-            // maxTurns คือจำนวนโต้ตอบทั้งหมด
-            // ไฟล์เสียงที่ 6 (Index 5) คือ FINALE
-            const finaleFile = allCustomerReplies[5]; 
+            // Index 8 คือไฟล์ที่ 9 (q10_...webm)
+            const finaleFile = allCustomerReplies[8]; 
             
             // ใช้ไฟล์เสียงตามลำดับ 1, 2, 3... ไปจนถึงก่อนถึงเทิร์นสุดท้าย
             const sequentialFiles = allCustomerReplies.slice(0, maxTurns - 1);
             
-            // กำหนดให้ไฟล์เสียงที่ใช้คือ ลำดับ + ไฟล์สุดท้ายที่ต้องการ (ไฟล์ 6)
             selectedRandomFiles = sequentialFiles.slice(0, maxTurns - 1);
             
-            // หาก maxTurns > 0 ให้เพิ่มไฟล์สุดท้ายที่กำหนดลงไป
             if (maxTurns > 0) {
                  selectedRandomFiles.push(finaleFile);
             }
@@ -440,23 +438,22 @@
         }
         
         window.updateHealthQuestionUI = function() {
+            const healthQuestionDisplay = document.getElementById('healthQuestionDisplay');
             if (isFollowUpMode) {
-                // S4 Follow-up mode
+                // followUpStep is 1-5
                 window.hQName.textContent = `ซักประวัติ Q${followUpStep}/${maxFollowUp}: ${H_FOLLOW_UP_NAMES[followUpStep - 1]}`;
-                document.getElementById('healthQuestionDisplay').innerHTML = `
+                healthQuestionDisplay.innerHTML = `
                     <p><strong>คำถามซักประวัติที่ต้องถาม:</strong> ${H_FOLLOW_UP_NAMES[followUpStep - 1]}</p>
                 `;
             } else if (currentHIndex < maxH) {
-                // S4 Standard question mode
+                // currentHIndex is 0-4
                 window.hQName.textContent = `คำถามที่ ${currentHIndex + 1}/${maxH}: ${H_QUESTION_NAMES[currentHIndex]}`;
-                document.getElementById('healthQuestionDisplay').innerHTML = `
+                healthQuestionDisplay.innerHTML = `
                     <p>คำถามหลัก: ใน 5 ปีที่ผ่านมา ท่านเคยได้รับการบาดเจ็บ เจ็บป่วย หรือเข้ารับการรักษาตัวในโรงพยาบาลหรือไม่?</p>
                 `;
             } else {
                 window.hQName.textContent = `คำถามสุขภาพเสร็จสิ้น`;
-                document.getElementById('healthQuestionDisplay').innerHTML = `
-                    <p>✅ เสร็จสิ้นการซักประวัติแล้ว</p>
-                `;
+                healthQuestionDisplay.innerHTML = `<p>✅ เสร็จสิ้นการซักประวัติแล้ว</p>`;
             }
         }
 
@@ -495,7 +492,23 @@
         }
 
 
-        // --- BATCH UPLOAD Logic ---
+        // --- BATCH UPLOAD Logic (Store to Array) ---
+        window.storeRecording = function(audioBlob, part, qNum, qText) {
+            allRecordings.push({ audioBlob, part, qNum, qText });
+            console.log(`✅ Recording saved locally: P${part}-Q${qNum}. Total recordings: ${allRecordings.length}`);
+            
+            // Update status to show total count
+            const statusElement = (part === 1) ? window.s1StatusElement : 
+                                  (part === 15) ? window.pitchStatusElement : 
+                                  (part === 2) ? window.s2StatusElement : 
+                                  (part === 3) ? window.s3StatusElement :
+                                  (part === 4) ? window.hStatusElement : 
+                                  (part === 5) ? window.aStatusElement : null;
+            if(statusElement) {
+                statusElement.textContent = `✅ บันทึกไฟล์เสียง P${part}-${qNum} เก็บในเครื่องแล้ว (${allRecordings.length} ไฟล์รออัปโหลด)`;
+            }
+        }
+
         window.uploadAllRecordings = async function() {
             const totalRecordings = allRecordings.length;
             if (totalRecordings === 0) {
@@ -578,7 +591,7 @@
             setTimeout(() => { window.loadingOverlay.style.display = "none"; }, 1500);
         }
         
-        // --- Main Recording Logic (MODIFIED for Batch) ---
+        // --- Main Recording Logic (Modified for Batch Upload) ---
         window.toggleRecording = async function(type) {
             let statusElement, buttonElement, nextAutoAction, originalButtonText;
             let part, qNum, qText, chunks = [];
@@ -620,18 +633,18 @@
                 originalButtonText = '🎙️ 2. บันทึกเสียงตอบข้อโต้แย้ง';
             }
             else if (type === 5) { 
-                part = 4; qNum = currentHIndex + 1; qText = `S4: คำถามสุขภาพหลัก Q${currentHIndex + 1}: ${H_QUESTION_NAMES[currentHIndex]}`; // Use currentHIndex for Q#
+                part = 4; qNum = currentHIndex + 1; qText = `S4: คำถามสุขภาพหลัก Q${currentHIndex + 1}: ${H_QUESTION_NAMES[currentHIndex]}`;
                 statusElement = window.hStatusElement;
                 buttonElement = window.answerHBtn; 
                 nextAutoAction = window.playFixedHealthQuestion; 
-                originalButtonText = '🎙️ 1. บันทึกคำถามสุขภาพหลัก';
+                originalButtonText = '🎙️ 1. บันทึกคำถามสุขภาพ';
             } 
             else if (type === 7) { 
-                part = 4; qNum = followUpStep + 1; qText = `S4: ซักประวัติ ${H_DISEASE_DATA[0].name} Q${followUpStep + 1}: ${H_FOLLOW_UP_NAMES[followUpStep]}`;
+                part = 4; qNum = currentHIndex + 1 + 0.1 * followUpStep; qText = `S4: ซักประวัติ ${H_DISEASE_DATA[0].name} Q${currentHIndex + 1}.F${followUpStep}: ${H_FOLLOW_UP_NAMES[followUpStep - 1]}`;
                 statusElement = window.hStatusElement;
                 buttonElement = window.followUpQBtn; 
                 nextAutoAction = window.playFixedFollowUpQuestion; 
-                originalButtonText = `🎙️ บันทึกคำถามซักประวัติ Q${followUpStep + 1}`;
+                originalButtonText = `🎙️ บันทึกคำถามซักประวัติ Q${followUpStep}`;
             } 
             else if (type === 6) { 
                 part = 5; 
@@ -666,11 +679,8 @@
                     mediaRecorder.onstop = () => {
                         const audioBlob = new Blob(chunks, { type: 'audio/webm' });
                         if (audioBlob.size > 0) {
-                            // ** SAVE TO ARRAY INSTEAD OF UPLOAD **
-                            allRecordings.push({ audioBlob, part, qNum, qText });
-                            console.log(`✅ Recording saved locally: P${part}-Q${qNum}. Total recordings: ${allRecordings.length}`);
-                            
-                            statusElement.textContent = `✅ บันทึกไฟล์เสียง P${part}-Q${qNum} เก็บในเครื่องแล้ว (${allRecordings.length} ไฟล์รออัปโหลด)`;
+                            // ** BATCH UPLOAD: STORE TO ARRAY **
+                            window.storeRecording(audioBlob, part, qNum, qText);
                         } else {
                             console.warn("Recording stopped with 0 size data. Not saving.");
                             statusElement.textContent = "⚠️ ไม่มีการบันทึกเสียง: ไฟล์มีขนาด 0";
@@ -693,7 +703,7 @@
                     // Update button text for STOP
                     if (type === 3) buttonElement.textContent = "⏹️ หยุดบันทึกสคริปต์ปิดการขาย";
                     else if (type === 4) buttonElement.textContent = "⏹️ หยุดบันทึกเสียงตอบข้อโต้แย้ง";
-                    else if (type === 5) buttonElement.textContent = "⏹️ หยุดบันทึกคำถามหลัก"; 
+                    else if (type === 5) buttonElement.textContent = "⏹️ หยุดบันทึกคำถามสุขภาพ"; 
                     else if (type === 7) buttonElement.textContent = "⏹️ หยุดบันทึกคำถามซักประวัติ"; 
                     else if (type === 6) buttonElement.textContent = `⏹️ หยุดบันทึกคำถามลงทะเบียนขั้นตอน ${aRound}`;
                     else if (type === 8) buttonElement.textContent = "⏹️ หยุดบันทึกเสียงนำเสนอ"; 
@@ -720,7 +730,7 @@
             }
         }
         
-        // --- Section 1 Functions (Fixed Sequential & Fixed Finale S1-6) ---
+        // --- Section 1 Functions (Fixed Sequential & Fixed Finale S1-Q9) ---
         window.endTurn = function() {
             if (turn < maxTurns) {
                 turn++;
@@ -734,7 +744,7 @@
 
                 const attemptPlay = () => {
                     const isFinale = (turn === maxTurns);
-                    const fileDescription = isFinale ? "ข้อโต้แย้งสุดท้าย (ไฟล์ 6)" : `โต้ตอบที่ ${turn}`;
+                    const fileDescription = isFinale ? "ข้อโต้แย้งสุดท้าย (ไฟล์ 9)" : `โต้ตอบที่ ${turn}`;
                     
                     window.s1StatusElement.textContent = `🔊 กำลังเล่นเสียงลูกค้า (${fileDescription})...`;
                     audioEl.play().catch(error => {
@@ -757,7 +767,7 @@
                         window.s1StatusElement.textContent = `🎤 พร้อมบันทึกเสียงโต้ตอบของพนักงาน (เทิร์นที่ ${turn + 1})`;
                         window.recordBtn.disabled = false;
                     } else {
-                        window.s1StatusElement.textContent = `🎉 เสร็จสิ้นบทสนทนาต้นสาย ${maxTurns} ข้อแล้ว (จบที่ข้อ 6)!
+                        window.s1StatusElement.textContent = `🎉 เสร็จสิ้นบทสนทนาต้นสาย ${maxTurns} ข้อแล้ว (จบที่ข้อ 9)!
 กรุณากดปุ่ม "จบบทที่ 1"`;
                         window.nextRoundBtn.disabled = false;
                         window.recordBtn.disabled = true;
@@ -766,7 +776,7 @@
             }
         }
 
-        // --- Section 1.5, 2, 3, 4, 5 Functions (Sequential Flow) ---
+        // --- Section 1.5, 2, 3 Flow (Sequential/Fixed Indexing) ---
         
         window.initSection1_5 = function() {
             document.getElementById('section1Div').style.display = 'none';
@@ -817,7 +827,7 @@
             qRound++;
             window.qRoundSpan.textContent = qRound;
             
-            const selectedFile = questionFiles[qRound - 1]; 
+            const selectedFile = questionFiles[qRound - 1]; // Sequential Indexing
             
             const audioEl = window.getCachedAudioElement(selectedFile, true);
             window.questionAudio = audioEl;
@@ -845,13 +855,13 @@
         window.initSection3 = function() {
             document.getElementById('section2Div').style.display = 'none';
             document.getElementById('section3Div').style.display = 'block';
-            
+
             window.nextSection3Btn.disabled = true;
             window.startQBtn.disabled = true;
             window.answerBtn.disabled = true;
             window.closeBtn.disabled = false; 
             window.replyBtn.disabled = true; 
-            window.nextSection4Btn.disabled = true; 
+            window.nextSection4Btn.disabled = true; // Disabled initially
             cRound = 0;
             window.closeBtn.style.display = 'block'; 
             window.s3StatusElement.textContent = "✅ ช่วงที่ 2 เสร็จสิ้น! กด '1. บันทึกสคริปต์ปิดการขาย' เพื่อเริ่มรอบปิดการขาย";
@@ -864,10 +874,11 @@
             window.cRoundSpan.textContent = cRound;
 
             if (cRound > maxC) {
+                // *** CRITICAL FIX: Enable the button to S4 ***
                 window.s3StatusElement.textContent = "🎉 เสร็จสิ้นช่วงที่ 3! กรุณากด 'จบบทที่ 3' เพื่อไปช่วงที่ 4";
                 window.replyBtn.disabled = true;
                 window.closeBtn.style.display = 'none'; 
-                window.nextSection4Btn.disabled = false; 
+                window.nextSection4Btn.disabled = false; // ENABLED
                 return;
             }
 
@@ -875,7 +886,7 @@
             
             const currentPool = objectionFiles; 
             if (currentPool.length === 0) return;
-            const selectedFile = currentPool[cRound - 1]; // Use fixed index
+            const selectedFile = currentPool[cRound - 1]; // Sequential Indexing
 
             const audioEl = window.getCachedAudioElement(selectedFile, true);
             window.objectionAudio = audioEl;
@@ -902,10 +913,11 @@
                 window.s3StatusElement.textContent = "✅ บันทึกเสร็จสิ้น! ข้อโต้แย้งลูกค้าถัดไปกำลังจะเริ่ม...";
                 setTimeout(window.playSequentialObjectionAuto, 50); 
             } else {
+                // *** CRITICAL FIX: Enable the button to S4 ***
                 window.s3StatusElement.textContent = "🎉 เสร็จสิ้นช่วงที่ 3! กรุณากด 'จบบทที่ 3' เพื่อไปช่วงที่ 4";
                 window.replyBtn.disabled = true;
                 window.closeBtn.style.display = 'none';
-                window.nextSection4Btn.disabled = false;
+                window.nextSection4Btn.disabled = false; // ENABLED
             }
         }
         
@@ -922,17 +934,17 @@
             isFollowUpMode = false;
             followUpStep = 0;
             
-            selectedDisease = H_DISEASE_DATA[0]; // FIXED: 'ความดันสูง'
+            selectedDisease = H_DISEASE_DATA[0]; // FIXED: 'ความดันสูง' for the YES trigger
             
             window.updateHealthQuestionUI(); 
             window.answerHBtn.disabled = false;
             
-            // Re-enable/show the answerHBtn and hide followUpQBtn if it exists
+            // Re-enable/show the answerHBtn and ensure followUpQBtn is hidden
             window.answerHBtn.style.display = 'block';
             if (window.followUpQBtn) window.followUpQBtn.style.display = 'none'; 
             
-            window.answerHBtn.textContent = '🎙️ 1. บันทึกคำถามสุขภาพหลัก';
-            window.hStatusElement.textContent = `✅ ช่วงที่ 3 เสร็จสิ้น! กรุณาบันทึกคำถามสุขภาพที่ 1/${maxH}`;
+            window.answerHBtn.textContent = '🎙️ 1. บันทึกคำถามสุขภาพ';
+            window.hStatusElement.textContent = `✅ ช่วงที่ 3 เสร็จสิ้น! กรุณาบันทึกคำถามสุขภาพที่ ${currentHIndex + 1}/${maxH}`;
             alert("จบบทที่ 3 แล้ว! เริ่มช่วงที่ 4: คำถามสุขภาพ (5 คำถามมาตรฐาน)");
         }
         
@@ -940,18 +952,10 @@
         window.playFixedHealthQuestion = function() {
             window.answerHBtn.disabled = true;
             
-            // Check if we are in Follow-up mode (called from toggleRecording type 5, but we check state)
-            if (isFollowUpMode) {
-                // This state should not be reached when recording type 5, but for safety:
-                // If the user attempts to record Q1 again during follow-up, proceed to follow-up logic.
-                // However, the primary logic is that we are now playing the customer's answer to the agent's question Q_currentHIndex.
-                console.error("Logic error: Recording Q1 during follow-up mode.");
-            }
-            
             let customerReplyUrl;
             let isYes;
             
-            // Logic based on fixed sequential flow: Q4 (Index 3) is YES, others are NO
+            // Fixed Logic: Q4 (Index 3) is YES, others are NO
             if (currentHIndex === 3) {
                 isYes = true;
                 customerReplyUrl = selectedDisease.yesTriggerUrl;
@@ -996,7 +1000,7 @@
                         window.updateHealthQuestionUI(); 
                         window.hStatusElement.textContent = `✅ คำตอบลูกค้าคือ 'ไม่เคย' กรุณาบันทึกคำถามสุขภาพที่ ${currentHIndex + 1}/${maxH}`;
                         window.answerHBtn.disabled = false;
-                        window.answerHBtn.textContent = `🎙️ ${currentHIndex + 1}. บันทึกคำถามสุขภาพหลัก`;
+                        window.answerHBtn.textContent = `🎙️ ${currentHIndex + 1}. บันทึกคำถามสุขภาพ`;
                     } else {
                         window.updateHealthQuestionUI();
                         window.hStatusElement.textContent = `🎉 คำถามสุขภาพครบ ${maxH} ข้อแล้ว! กรุณากด 'จบบทที่ 4' เพื่อไปช่วงที่ 5`;
@@ -1011,7 +1015,7 @@
         window.playFixedFollowUpQuestion = function() {
             window.followUpQBtn.disabled = true;
             
-            // followUpStep is currently the step recorded (e.g., 1 for FQ1). We need customer answer for that step.
+            // followUpStep is the step recorded (1 to 5)
             const customerReplyUrl = selectedDisease.followUpReplies[followUpStep - 1]; 
 
             const audioEl = window.getCachedAudioElement(customerReplyUrl, true);
@@ -1028,7 +1032,6 @@
             }
             
             audioEl.onended = () => {
-                // Prepare for the next follow-up step
                 followUpStep++; 
 
                 if (followUpStep > maxFollowUp) { 
@@ -1042,7 +1045,7 @@
                         window.answerHBtn.style.display = 'block';
                         window.followUpQBtn.style.display = 'none';
                         window.answerHBtn.disabled = false;
-                        window.answerHBtn.textContent = `🎙️ ${currentHIndex + 1}. บันทึกคำถามสุขภาพหลัก`;
+                        window.answerHBtn.textContent = `🎙️ ${currentHIndex + 1}. บันทึกคำถามสุขภาพ`;
                     } else {
                         // S4 Finished
                         window.updateHealthQuestionUI();
@@ -1076,13 +1079,12 @@
             maxA = REGISTRATION_STEPS;
             window.maxASpan.textContent = maxA;
             aRound = 1; // CRITICAL: Start at step 1 for the employee to record
-            window.aRoundSpan.textContent = aRound; // Update initial step display
+            window.aRoundSpan.textContent = aRound; 
             
             window.renderRegistrationSteps();
-            window.updateStepHighlight(aRound); // Highlight step 1
+            window.updateStepHighlight(aRound); 
             
             // Start recording immediately 
-            window.startABtn.style.display = 'none'; 
             window.answerABtn.disabled = false; 
             window.answerABtn.textContent = `🎙️ บันทึกคำถามลงทะเบียนขั้นตอน ${aRound}`;
 
@@ -1221,21 +1223,11 @@
             window.aRoundSpan = document.getElementById("aRound");
             window.maxASpan = document.getElementById("maxASpan");
             window.aStatusElement = document.getElementById("aStatus"); 
-            window.startABtn = document.getElementById("startABtn");
             window.answerABtn = document.getElementById("answerABtn");
             window.finalSaveBtn = document.getElementById("finalSaveBtn");
             window.agreementAudio = document.getElementById("agreementAudio");
             window.stepList = document.getElementById("stepList"); 
             
-            // Hide all sections initially (will be shown in startTest)
-            document.getElementById('section1Div').style.display = 'block'; 
-            document.getElementById('section1_5Div').style.display = 'none';
-            document.getElementById('section2Div').style.display = 'none';
-            document.getElementById('section3Div').style.display = 'none';
-            document.getElementById('section4Div').style.display = 'none';
-            document.getElementById('section5Div').style.display = 'none';
-
-
             // 3. Bind Event Listeners
             window.startTestBtn.addEventListener('click', startTest); 
             window.recordBtn.addEventListener('click', () => window.toggleRecording(1));
@@ -1257,12 +1249,6 @@
             window.finalSaveBtn.addEventListener('click', window.saveAllRecordings); 
             
             window.certBtn.addEventListener('click', window.generateCertificate);
-            
-            // Initialize recording array on load
-            allRecordings = [];
-            
-            // Set fixed initial disease for S4
-            selectedDisease = H_DISEASE_DATA[0];
         }
 
         window.startTest = function() {
@@ -1289,15 +1275,17 @@
 
             window.registrationSection.style.display = 'none';
             window.testSection.style.display = 'block';
+
+            // Hide/Show sections for clean start
+            document.getElementById('section1Div').style.display = 'block';
             document.getElementById('section1_5Div').style.display = 'none';
             document.getElementById('section2Div').style.display = 'none';
             document.getElementById('section3Div').style.display = 'none';
             document.getElementById('section4Div').style.display = 'none';
             document.getElementById('section5Div').style.display = 'none';
-            document.getElementById('section1Div').style.display = 'block';
 
-            window.preloadCriticalAudio(); 
-            window.prepareTurnFiles(); 
+            window.preloadCriticalAudio();
+            window.prepareTurnFiles();
             window.recordBtn.disabled = false;
             window.s1StatusElement.textContent = `🎤 พร้อมบันทึกบทพูดเปิดตัว (เทิร์นที่ 1/${maxTurns})`;
         }
