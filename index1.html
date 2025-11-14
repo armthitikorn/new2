@@ -418,13 +418,13 @@
             console.log("Preloading started. The test can proceed without network delays for customer audio.");
         }
 
-        // ** FIXED S1 FINAL FILE: Pinned to Index 7 (Q9) **
+        // ** FIXED S1 FINAL FILE: Pinned to Index 9 (Q6) **
         window.prepareTurnFiles = function() {
-            // Index 7 คือไฟล์ Q9 (FINAL)
+            // Index 9 คือไฟล์ Q6 (FINAL)
             const S1_FINAL_FILE_INDEX = 7; 
             const finaleFile = allCustomerReplies[S1_FINAL_FILE_INDEX]; 
             
-            // ใช้ไฟล์ทั้งหมดใน pool ยกเว้นไฟล์ Q9 (Index 7)
+            // ใช้ไฟล์ทั้งหมดใน pool ยกเว้นไฟล์ Q6 (Index 9)
             const availableFiles = allCustomerReplies.slice(0, allCustomerReplies.length).filter((_, index) => index !== S1_FINAL_FILE_INDEX); 
             
             // เลือกไฟล์ตามจำนวน maxTurns - 1
@@ -433,7 +433,7 @@
             selectedRandomFiles = sequentialFiles;
             
             if (maxTurns > 0) {
-                 // Force the final file (Q9, Index 7) to be the last turn
+                 // Force the final file (Q6, Index 9) to be the last turn
                  selectedRandomFiles.push(finaleFile);
             }
             
