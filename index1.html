@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>E-Simulator Roleplay (ประกันสุขภาพ - FIXED S1-Q9 & S3-Q10 FINALE & BATCH UPLOAD)</title>
+    <title>E-Simulator Roleplay (ประกันสุขภาพ - FINALE & GROUP TRACKING)</title>
     
     <style>
         /* 1. สไตล์ที่ถูกปรับขนาด (NEW) */
@@ -146,7 +146,7 @@
                     <option value="NewTSRsOnboarding">กลุ่ม New TSRs On boarding</option>
                     <option value="NewTSRs">กลุ่ม New TSRs</option>
                     <option value="ExistingTSRs">กลุ่ม TSRs existing</option>
-                    </select>
+                </select>
             </div>
             <div style="margin-bottom: 30px;">
                 <label style="font-weight: bold; display: block; margin-bottom: 10px;">
@@ -174,7 +174,7 @@
             
             <div id="section1Div">
                 <h2>🗣️ ช่วงที่ 1: เปิดตัว/โต้ตอบต้นสาย (เทิร์นที่ <span id="turnSpan">1</span>/<span id="maxTurnSpan">5</span>)</h2>
-                <audio id="customerAudio" src="" controls style="width: 100%; display: none;"></audio>
+                <audio id="customerAudio" src=""></audio>
                 <button id="recordBtn">🎙️ เริ่มบันทึกเสียง (พนักงาน)</button>
                 <button disabled id="nextRoundBtn">✅ จบบทที่ 1 (ไปช่วงที่ 1.5)</button>
                 <p id="status">รอเริ่มบันทึกบทพูดเปิดตัว</p>
@@ -191,7 +191,7 @@
 
             <div id="section2Div" style="display: none;">
                 <h2>❓ ช่วงที่ 2: ตอบคำถามลูกค้า (รอบที่ <span id="qRound">1</span>/<span id="maxQSpan">10</span>)</h2>
-                <audio id="questionAudio" controls style="width: 100%; display: none;"></audio>
+                <audio id="questionAudio"></audio>
                 <button disabled id="startQBtn">🔊 เริ่มคำถามลูกค้า</button>
                 <button disabled id="answerBtn">🎙️ เริ่มบันทึกคำตอบ</button>
                 <button disabled id="nextSection3Btn">✅ จบบทที่ 2 (ไปช่วงที่ 3)</button>
@@ -202,7 +202,7 @@
             <div id="section3Div" style="display: none;">
                 <h2>💰 ช่วงที่ 3: ปิดการขาย + ข้อโต้แย้ง (รอบที่ <span id="cRound">1</span>/<span id="maxCSpan">5</span>)</h2>
                 <button disabled id="closeBtn">🎙️ 1. บันทึกสคริปต์ปิดการขาย</button>
-                <audio id="objectionAudio" controls style="width: 100%; display: none;"></audio>
+                <audio id="objectionAudio"></audio>
                 <button disabled id="replyBtn">🎙️ 2. บันทึกเสียงตอบข้อโต้แย้ง</button>
                 <button disabled id="nextSection4Btn">✅ จบบทที่ 3 (ไปช่วงที่ 4)</button>
                 <p id="cStatus">รอเริ่มช่วงที่ 3</p>
@@ -215,7 +215,7 @@
                 <div id="healthQuestionDisplay" style="margin: 15px 0; padding: 15px; border: 1px dashed #d9534f; border-radius: 8px; background-color: #ffeaea; font-weight: bold; font-size: 18px; color: #333;">
                     <p>คำถามหลัก: ใน 5 ปีที่ผ่านมา ท่านเคยได้รับการบาดเจ็บ เจ็บป่วย หรือเข้ารับการรักษาตัวในโรงพยาบาลหรือไม่?</p>
                 </div>
-                <audio id="healthAudio" controls style="width: 100%; display: none;"></audio>
+                <audio id="healthAudio"></audio>
                 <button disabled id="answerHBtn">🎙️ 1. บันทึกคำถามสุขภาพ</button>
                 <button disabled id="nextSection5Btn">✅ จบบทที่ 4 (ไปช่วงที่ 5)</button>
                 <p id="hStatus">รอเริ่มช่วงที่ 4</p>
@@ -224,7 +224,7 @@
 
             <div id="section5Div" style="display: none;">
                 <h2>🤝 ช่วงที่ 5: ลงทะเบียนลูกค้า (ขั้นตอนที่ <span id="aRound">1</span>/<span id="maxASpan">7</span>)</h2>
-                <audio id="agreementAudio" controls style="width: 100%; display: none;"></audio>
+                <audio id="agreementAudio"></audio>
                 
                 <div id="registrationStepsDisplay" style="text-align: left; margin: 15px 0; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f8f9fa;">
                     <h4 style="color: #333; margin-top: 0;">รายการที่ต้องสอบถามลูกค้า:</h4>
@@ -267,8 +267,9 @@
         
         let allRecordings = []; 
         
-        // 🚨 GLOBAL STATE FOR CUSTOMER AUDIO URL
+        // 🚨 NEW: GLOBAL STATE FOR CUSTOMER AUDIO URL & USER GROUP
         let lastCustomerAudioUrl = 'N/A';
+        let userGroup = ''; 
         
         // Round Counters 
         let turn = 0;
@@ -284,7 +285,7 @@
         let maxTurns;
         let maxQ;
         let maxC;
-        let maxH; // Set in startTest
+        let maxH = 5; // Set in startTest
         let maxFollowUp = 5; 
         let maxA; 
         
@@ -307,7 +308,7 @@
             "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q5_60ca36aa-3425-4824-987a-ff6b7fd7dbe1.webm", // Index 4 (Q5)
             "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q7_490b0134-6446-4708-b86c-785d31306d07.webm", // Index 5 (Q7)
             "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q8_ad281257-c3b9-44dd-8ca5-0f383d438003.webm", // Index 6 (Q8)
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q9_36918038-0a42-4b6b-afc6-048a619f589d.webm", // Index 7 (Q9) <--- S1 FINAL FILE
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q9_36918038-0a42-4b6b-afc6-048a619f589d.webm", // Index 7 (Q9) 
             "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q10_68208219-7f94-48be-8446-d296d03711a3.webm", // Index 8 (Q10)
             "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q6_75f89f58-d31d-4edb-a47d-901d0dfc92d4.webm" // Index 9 (Q6) 
         ];
@@ -335,7 +336,7 @@
             "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q7_1bd79b02-b363-4004-80f4-fcc2936fe8ec.webm", // Index 6 (Q7)
             "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q8_0cca5181-e7e9-4635-914b-050430144c8c.webm", // Index 7 (Q8)
             "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q9_36918038-0a42-4b6b-afc6-048a619f589d.webm", // Index 8 (Q9)
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q10_fbba463f-b3a5-4671-a018-006d457ccd6b.webm" // Index 9 (Q10) <--- S3 FINAL FILE
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part3/q10_fbba463f-b3a5-4671-a018-006d457ccd6b.webm" // Index 9 (Q10) 
         ];
         
         // --- SECTION 5: Registration Steps (URL จาก Test.thml.txt) ---
@@ -420,14 +421,16 @@
 
         // ** FIXED S1 FINAL FILE: Pinned to Index 7 (Q9) **
         window.prepareTurnFiles = function() {
-            // Index 7 คือไฟล์ Q9
+            // Index 7 คือไฟล์ Q9 (S1 Final)
             const S1_FINAL_FILE_INDEX = 7; 
             const finaleFile = allCustomerReplies[S1_FINAL_FILE_INDEX]; 
             
-            // ใช้ไฟล์ทั้งหมดใน pool ยกเว้นไฟล์ Q9 (Index 7)
+            // ใช้ไฟล์ทั้งหมดใน pool ยกเว้นไฟล์ Q9 (Index 7) และไฟล์ Q6 (Index 9)
+            // เราใช้ slice(0, 7) เพื่อให้ได้ Q1-Q8 (Index 0-6)
+            // แล้วเราเลือกตามจำนวน maxTurns - 1 จาก pool ที่เหลือ
             const availableFiles = allCustomerReplies.slice(0, allCustomerReplies.length).filter((_, index) => index !== S1_FINAL_FILE_INDEX); 
             
-            // เลือกไฟล์ตามจำนวน maxTurns - 1
+            // เลือกไฟล์ตามจำนวน maxTurns - 1 
             const sequentialFiles = availableFiles.slice(0, maxTurns - 1);
             
             selectedRandomFiles = sequentialFiles;
@@ -532,7 +535,8 @@
             window.loadingOverlay.style.display = "flex";
             const userName = window.inputUserName.value.trim() || `Anon User`;
             const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
-            const userGroup = window.inputUserGroup.value.trim();
+            // 🚨 NEW: Use Global User Group
+            const group = userGroup || 'Unknown';
             
             let successfulUploads = 0;
 
@@ -584,8 +588,8 @@
                                 question_text: qText + ` (Diff: ${difficulty})`, 
                                 audio_url: publicUrl, // Employee Audio URL
                                 duration_seconds: audioBlob.size > 0 ? (audioBlob.size / 100000) : 0,
-                                user_group: userGroup,
-                                // 🚨 CRUCIAL ADDITION: Customer Audio URL
+                                // 🚨 CRUCIAL ADDITION: User Group & Customer Audio URL
+                                user_group: group,
                                 customer_audio_url: customerAudioUrl
                             }
                         ]);
@@ -768,43 +772,20 @@
                 const audioEl = window.getCachedAudioElement(fileToPlay, true);
                 window.customerAudio = audioEl;
 
-                // 🚨 FIX 1: Ensure controls are hidden before play attempt, and audio element is visible
-                window.customerAudio.controls = false;
-                window.customerAudio.style.display = 'block'; 
-
                 const fileDescription = (turn === maxTurns) ? "ข้อโต้แย้งสุดท้าย (ไฟล์ 9)" : `โต้ตอบที่ ${turn}`;
                 
                 const attemptPlay = () => {
                     window.s1StatusElement.textContent = `🔊 กำลังเล่นเสียงลูกค้า (${fileDescription})...`;
                     audioEl.play().catch(error => {
-                        // 🚨 FIX 2: Autoplay Block Handler - Show controls and instruct user
-                        window.customerAudio.controls = true; 
-                        window.s1StatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก! กรุณากดปุ่ม ▶️ บนแถบเสียงลูกค้าด้านบนเพื่อให้เสียงเล่นให้จบก่อน แล้วจึงกด 🎙️ เริ่มบันทึกเสียง (พนักงาน) เพื่อเริ่มรอบถัดไป`; 
-                        window.recordBtn.disabled = true; // Keep record disabled to force user interaction with audio player
-                        window.nextRoundBtn.disabled = true;
+                        window.s1StatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก: ${error.message}. กรุณากดปุ่ม "🎙️ เริ่มบันทึกเสียง (พนักงาน)" เพื่อลองอีกครั้ง`; 
+                        window.recordBtn.disabled = false;
                         
-                        // Setup listener for manual play completion
-                        audioEl.onended = () => {
-                            audioEl.onloadeddata = null;
-                            audioEl.onended = null;
-                            window.customerAudio.controls = false; // Hide controls after manual play
-                            window.customerAudio.style.display = 'none'; // Hide the audio element
-                            lastCustomerAudioUrl = fileToPlay;
-
-                            if (turn < maxTurns) { 
-                                window.s1StatusElement.textContent = `🎤 พร้อมบันทึกเสียงโต้ตอบของพนักงาน (เทิร์นที่ ${turn + 1})`;
-                                window.recordBtn.disabled = false;
-                            } else {
-                                // 🚨 FINALE PATH: Unlock next section button
-                                window.s1StatusElement.textContent = `🎉 เสร็จสิ้นบทสนทนาต้นสาย ${maxTurns} ข้อแล้ว (จบที่ข้อ 9)!
-กรุณากดปุ่ม "จบบทที่ 1"`;
-                                window.nextRoundBtn.disabled = false;
-                                window.recordBtn.disabled = true;
-                            }
-                        };
-                        
-                        // Exit the function after setting up the manual play sequence
-                        return;
+                        // 🔥 SAFETY NET S1 (สำหรับกรณีถูกบล็อก):
+                        if (turn === maxTurns) {
+                            console.warn("S1 Final turn blocked by Autoplay, enabling Next button as fallback.");
+                            window.nextRoundBtn.disabled = false;
+                            window.recordBtn.disabled = true;
+                        }
                     });
                 };
                 
@@ -814,11 +795,9 @@
                     attemptPlay();
                 }
 
-                // Normal onended logic (Only runs if play() was successful)
                 audioEl.onended = () => {
                     audioEl.onloadeddata = null;
                     audioEl.onended = null;
-                    window.customerAudio.style.display = 'none'; // Hide the audio element
                     
                     // 🚨 CRUCIAL: Update lastCustomerAudioUrl here
                     lastCustomerAudioUrl = fileToPlay;
@@ -827,13 +806,22 @@
                         window.s1StatusElement.textContent = `🎤 พร้อมบันทึกเสียงโต้ตอบของพนักงาน (เทิร์นที่ ${turn + 1})`;
                         window.recordBtn.disabled = false;
                     } else {
-                        // 🚨 FINALE PATH: Unlock next section button
                         window.s1StatusElement.textContent = `🎉 เสร็จสิ้นบทสนทนาต้นสาย ${maxTurns} ข้อแล้ว (จบที่ข้อ 9)!
 กรุณากดปุ่ม "จบบทที่ 1"`;
                         window.nextRoundBtn.disabled = false;
                         window.recordBtn.disabled = true;
                     }
                 };
+
+                // 🔥 SAFETY NET S1 (สำหรับกรณี onended ไม่ทำงาน):
+                if (turn === maxTurns) {
+                    setTimeout(() => {
+                        if (window.nextRoundBtn.disabled) {
+                            console.warn("S1 Final turn timeout, manually enabling Next button.");
+                            window.nextRoundBtn.disabled = false;
+                        }
+                    }, 15000); // 15 วินาที timeout
+                }
             }
         }
 
@@ -887,9 +875,10 @@
         // S2: Play Sequential Question
         window.playSequentialQuestion = function() {
             if (qRound >= maxQ) {
+                // ✅ S2 FINALE SUCCESS: เมื่อครบจำนวนคำถาม (maxQ) ให้เปิดปุ่ม "จบบทที่ 2"
                 window.s2StatusElement.textContent = `🎉 คำถามครบ ${maxQ} ข้อแล้ว!
 กรุณากด 'จบบทที่ 2' เพื่อไปช่วงที่ 3`;
-                window.nextSection3Btn.disabled = false;
+                window.nextSection3Btn.disabled = false; // บังคับเปิดปุ่ม!
                 window.startQBtn.disabled = true;
                 window.answerBtn.disabled = true;
                 return;
@@ -906,28 +895,11 @@
             window.startQBtn.disabled = true;
             window.answerBtn.disabled = true;
             
-            // 🚨 FIX 1: Ensure controls are hidden before play attempt, and audio element is visible
-            window.questionAudio.controls = false;
-            window.questionAudio.style.display = 'block';
-            
             const attemptPlay = () => {
-                audioEl.play().catch(error => { 
-                     // 🚨 FIX 2: Autoplay Block Handler for S2
-                     window.questionAudio.controls = true; 
-                     window.s2StatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก! กรุณากดปุ่ม ▶️ บนแถบเสียงลูกค้าด้านบนให้เสียงเล่นให้จบก่อน แล้วจึงกด 🎙️ เริ่มบันทึกคำตอบ`; 
+                audioEl.play().catch(error => { // Add catch for Autoplay Policy
+                     window.s2StatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก: ${error.message}. กรุณากดปุ่ม '🔊 เริ่มคำถามลูกค้า' อีกครั้ง`; 
                      window.startQBtn.disabled = false;
-                     window.answerBtn.disabled = true;
-
-                     // Setup listener for manual play completion
-                     audioEl.onended = () => {
-                        window.questionAudio.controls = false;
-                        window.questionAudio.style.display = 'none'; // Hide the audio element
-                        lastCustomerAudioUrl = selectedFile;
-                        window.s2StatusElement.textContent = "🎤 พร้อมบันทึกคำตอบ";
-                        window.answerBtn.disabled = false;
-                        if (qRound === 1) window.startQBtn.style.display = 'none';
-                     };
-                     
+                     audioEl.onended = null;
                      return;
                 });
                 window.s2StatusElement.textContent = `🔊 กำลังเล่นคำถามที่ ${qRound}/${maxQ}...`; 
@@ -938,11 +910,9 @@
                 attemptPlay();
             }
             
-            // Normal onended logic (Only runs if play() was successful)
             audioEl.onended = () => {
                 // 🚨 CRUCIAL: Update lastCustomerAudioUrl here
                 lastCustomerAudioUrl = selectedFile;
-                window.questionAudio.style.display = 'none'; // Hide the audio element
                 window.s2StatusElement.textContent = "🎤 พร้อมบันทึกคำตอบ";
                 window.answerBtn.disabled = false;
                 if (qRound === 1) window.startQBtn.style.display = 'none';
@@ -972,15 +942,16 @@
 
         // ** FIXED S3 FINAL FILE: Pinned to Index 9 (File 10) for the last round **
         window.playSequentialObjectionAuto = function() {
+            
             if (cRound >= maxC) {
-                // FIX: Enable the button to S4
+                // ✅ S3 FINALE SUCCESS: เมื่อครบจำนวนข้อโต้แย้ง (maxC) ให้เปิดปุ่ม "จบบทที่ 3"
                 window.s3StatusElement.textContent = "🎉 เสร็จสิ้นช่วงที่ 3! กรุณากด 'จบบทที่ 3' เพื่อไปช่วงที่ 4";
                 window.replyBtn.disabled = true;
                 window.closeBtn.style.display = 'none'; 
-                window.nextSection4Btn.disabled = false; // ENABLED
+                window.nextSection4Btn.disabled = false; // บังคับเปิดปุ่ม!
                 return;
             }
-            
+
             cRound++;
             window.cRoundSpan.textContent = cRound;
 
@@ -1003,26 +974,11 @@
             const audioEl = window.getCachedAudioElement(selectedFile, true);
             window.objectionAudio = audioEl;
 
-            // 🚨 FIX 1: Ensure controls are hidden before play attempt, and audio element is visible
-            window.objectionAudio.controls = false;
-            window.objectionAudio.style.display = 'block';
-
             const attemptPlay = () => {
                 audioEl.play().catch(error => {
-                    // 🚨 FIX 2: Autoplay Block Handler for S3
-                    window.objectionAudio.controls = true;
-                    window.s3StatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก! กรุณากดปุ่ม ▶️ บนแถบเสียงลูกค้าด้านบนให้เสียงเล่นให้จบก่อน แล้วจึงกด 🎙️ 2. บันทึกเสียงตอบข้อโต้แย้ง`;
+                    window.s3StatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก: ${error.message}. กรุณากดปุ่ม "🎙️ 2. บันทึกเสียงตอบข้อโต้แย้ง" อีกครั้งเพื่อ "ปลดบล็อก" การเล่นเสียง`;
                     window.replyBtn.disabled = false;
-                    
-                    // Setup listener for manual play completion
-                    audioEl.onended = () => {
-                        window.objectionAudio.controls = false;
-                        window.objectionAudio.style.display = 'none'; // Hide the audio element
-                        lastCustomerAudioUrl = selectedFile;
-                        window.s3StatusElement.textContent = "🎤 พร้อมบันทึกเสียงตอบกลับข้อโต้แย้ง";
-                        window.replyBtn.disabled = false;
-                        window.replyBtn.textContent = `🎙️ ${cRound === maxC ? maxC + '. บันทึกเสียงตอบข้อโต้แย้งสุดท้าย' : (cRound + 1) + '. บันทึกเสียงตอบข้อโต้แย้ง'}`;
-                    };
+                    audioEl.onended = null;
                     return;
                 });
                 window.s3StatusElement.textContent = `🔊 กำลังเล่นข้อโต้แย้งลูกค้า (รอบที่ ${cRound}/${maxC})...`; 
@@ -1033,11 +989,9 @@
                 attemptPlay();
             }
 
-            // Normal onended logic (Only runs if play() was successful)
             audioEl.onended = () => {
                 // 🚨 CRUCIAL: Update lastCustomerAudioUrl here
                 lastCustomerAudioUrl = selectedFile;
-                window.objectionAudio.style.display = 'none'; // Hide the audio element
                 window.s3StatusElement.textContent = "🎤 พร้อมบันทึกเสียงตอบกลับข้อโต้แย้ง";
                 window.replyBtn.disabled = false;
                 window.replyBtn.textContent = `🎙️ ${cRound === maxC ? maxC + '. บันทึกเสียงตอบข้อโต้แย้งสุดท้าย' : (cRound + 1) + '. บันทึกเสียงตอบข้อโต้แย้ง'}`;
@@ -1049,11 +1003,11 @@
                 window.s3StatusElement.textContent = "✅ บันทึกเสร็จสิ้น! ข้อโต้แย้งลูกค้าถัดไปกำลังจะเริ่ม...";
                 setTimeout(window.playSequentialObjectionAuto, 50); 
             } else {
-                // FIX: Enable the button to S4
+                // ✅ S3 FINALE SUCCESS: เมื่อจบครบทุกรอบ ให้เปิดปุ่ม "จบบทที่ 3"
                 window.s3StatusElement.textContent = "🎉 เสร็จสิ้นช่วงที่ 3! กรุณากด 'จบบทที่ 3' เพื่อไปช่วงที่ 4";
                 window.replyBtn.disabled = true;
                 window.closeBtn.style.display = 'none';
-                window.nextSection4Btn.disabled = false; // ENABLED
+                window.nextSection4Btn.disabled = false; // บังคับเปิดปุ่ม!
             }
         }
         
@@ -1108,47 +1062,11 @@
             const audioEl = window.getCachedAudioElement(customerReplyUrl, true);
             window.healthAudio = audioEl;
 
-            // 🚨 FIX 1: Ensure controls are hidden before play attempt, and audio element is visible
-            window.healthAudio.controls = false;
-            window.healthAudio.style.display = 'block';
-
             const attemptPlay = () => {
                 audioEl.play().catch(error => {
-                    // 🚨 FIX 2: Autoplay Block Handler for S4
-                    window.healthAudio.controls = true;
-                    window.hStatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก! กรุณากดปุ่ม ▶️ บนแถบเสียงลูกค้าด้านบนให้เสียงเล่นให้จบก่อน แล้วจึงบันทึกคำถามสุขภาพที่ ${currentHIndex + 1}`;
+                    window.hStatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก: ${error.message}. กรุณากดปุ่ม "🎙️ 1. บันทึกคำถามสุขภาพ" อีกครั้งเพื่อ "ปลดบล็อก" การเล่นเสียง`;
                     window.answerHBtn.disabled = false;
-                    
-                    // Setup listener for manual play completion
-                    audioEl.onended = () => {
-                        window.healthAudio.controls = false;
-                        window.healthAudio.style.display = 'none'; // Hide the audio element
-                        lastCustomerAudioUrl = isYes ? customerReplyUrl : NO_ANSWER_URL; 
-                        
-                        if (isYes) {
-                            isFollowUpMode = true; 
-                            followUpStep = 1; 
-                            window.updateHealthQuestionUI(); 
-                            window.hStatusElement.textContent = `🎤 พร้อมบันทึกคำถามซักประวัติ Q${followUpStep}`;
-                            window.answerHBtn.style.display = 'none'; 
-                            window.followUpQBtn.style.display = 'block'; 
-                            window.followUpQBtn.textContent = `🎙️ บันทึกคำถามซักประวัติ Q${followUpStep}`;
-                            window.followUpQBtn.disabled = false; 
-                        } else {
-                            currentHIndex++;
-                            if (currentHIndex < maxH) {
-                                window.updateHealthQuestionUI(); 
-                                window.hStatusElement.textContent = `✅ คำตอบลูกค้าคือ 'ไม่เคย' กรุณาบันทึกคำถามสุขภาพที่ ${currentHIndex + 1}/${maxH}`;
-                                window.answerHBtn.disabled = false;
-                                window.answerHBtn.textContent = `🎙️ ${currentHIndex + 1}. บันทึกคำถามสุขภาพ`;
-                            } else {
-                                window.updateHealthQuestionUI();
-                                window.hStatusElement.textContent = `🎉 คำถามสุขภาพครบ ${maxH} ข้อแล้ว! กรุณากด 'จบบทที่ 4' เพื่อไปช่วงที่ 5`;
-                                window.nextSection5Btn.disabled = false;
-                                window.answerHBtn.disabled = true;
-                            }
-                        }
-                    };
+                    audioEl.onended = null;
                     return;
                 });
                 const replyText = isYes ? `ใช่ (โรค: ${selectedDisease.name})` : `ไม่เคยค่ะ/ครับ`;
@@ -1160,14 +1078,12 @@
                 attemptPlay();
             }
             
-            // Normal onended logic (Only runs if play() was successful)
             audioEl.onended = () => {
                 audioEl.onloadeddata = null;
                 audioEl.onended = null;
                 
                 // 🚨 CRUCIAL: Update lastCustomerAudioUrl here
                 lastCustomerAudioUrl = isYes ? customerReplyUrl : NO_ANSWER_URL; 
-                window.healthAudio.style.display = 'none'; // Hide the audio element
 
                 if (isYes) {
                     isFollowUpMode = true; 
@@ -1187,6 +1103,7 @@
                         window.answerHBtn.disabled = false;
                         window.answerHBtn.textContent = `🎙️ ${currentHIndex + 1}. บันทึกคำถามสุขภาพ`;
                     } else {
+                        // ✅ S4 FINALE SUCCESS: เมื่อครบจำนวนคำถาม (maxH) ให้เปิดปุ่ม "จบบทที่ 4"
                         window.updateHealthQuestionUI();
                         window.hStatusElement.textContent = `🎉 คำถามสุขภาพครบ ${maxH} ข้อแล้ว! กรุณากด 'จบบทที่ 4' เพื่อไปช่วงที่ 5`;
                         window.nextSection5Btn.disabled = false;
@@ -1206,51 +1123,11 @@
             const audioEl = window.getCachedAudioElement(customerReplyUrl, true);
             window.healthAudio = audioEl;
 
-            // 🚨 FIX 1: Ensure controls are hidden before play attempt, and audio element is visible
-            window.healthAudio.controls = false;
-            window.healthAudio.style.display = 'block';
-
             const attemptPlay = () => {
                 audioEl.play().catch(error => {
-                    // 🚨 FIX 2: Autoplay Block Handler for S4 Follow-up
-                    window.healthAudio.controls = true;
-                    window.hStatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก! กรุณากดปุ่ม ▶️ บนแถบเสียงลูกค้าด้านบนให้เสียงเล่นให้จบก่อน แล้วจึงบันทึกคำถามซักประวัติ Q${followUpStep}`;
+                    window.hStatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก: ${error.message}. กรุณากดปุ่ม "🎙️ บันทึกคำถามซักประวัติ" อีกครั้งเพื่อ "ปลดบล็อก" การเล่นเสียง`;
                     window.followUpQBtn.disabled = false;
-                    
-                    // Setup listener for manual play completion
-                    audioEl.onended = () => {
-                        window.healthAudio.controls = false;
-                        window.healthAudio.style.display = 'none'; // Hide the audio element
-                        lastCustomerAudioUrl = customerReplyUrl;
-                        followUpStep++; 
-
-                        if (followUpStep > maxFollowUp) { 
-                            // ... (rest of end logic, copied from normal flow)
-                            isFollowUpMode = false;
-                            currentHIndex++; 
-                            
-                            if (currentHIndex < maxH) {
-                                window.updateHealthQuestionUI();
-                                window.hStatusElement.textContent = `✅ สอบสวนโรคเสร็จสิ้น! กรุณาบันทึกคำถามสุขภาพที่ ${currentHIndex + 1}/${maxH}`;
-                                window.answerHBtn.style.display = 'block';
-                                window.followUpQBtn.style.display = 'none';
-                                window.answerHBtn.disabled = false;
-                                window.answerHBtn.textContent = `🎙️ ${currentHIndex + 1}. บันทึกคำถามสุขภาพ`;
-                            } else {
-                                window.updateHealthQuestionUI();
-                                window.hStatusElement.textContent = `🎉 คำถามสุขภาพครบ ${maxH} ข้อแล้ว! กรุณากด 'จบบทที่ 4' เพื่อไปช่วงที่ 5`;
-                                window.followUpQBtn.style.display = 'none';
-                                window.answerHBtn.style.display = 'none';
-                                window.nextSection5Btn.disabled = false;
-                            }
-                        } else {
-                            window.updateHealthQuestionUI(); 
-                            
-                            window.hStatusElement.textContent = `🎤 พร้อมบันทึกคำถามซักประวัติ Q${followUpStep} (${H_FOLLOW_UP_NAMES[followUpStep - 1]})`;
-                            window.followUpQBtn.textContent = `🎙️ บันทึกคำถามซักประวัติ Q${followUpStep}`;
-                            window.followUpQBtn.disabled = false;
-                        }
-                    };
+                    audioEl.onended = null;
                     return;
                 });
                 window.hStatusElement.textContent = `🔊 กำลังเล่นคำตอบลูกค้าสำหรับ Q${followUpStep}...`;
@@ -1261,11 +1138,9 @@
                 attemptPlay();
             }
             
-            // Normal onended logic (Only runs if play() was successful)
             audioEl.onended = () => {
                 // 🚨 CRUCIAL: Update lastCustomerAudioUrl here
                 lastCustomerAudioUrl = customerReplyUrl;
-                window.healthAudio.style.display = 'none'; // Hide the audio element
                 followUpStep++; 
 
                 if (followUpStep > maxFollowUp) { 
@@ -1280,6 +1155,7 @@
                         window.answerHBtn.disabled = false;
                         window.answerHBtn.textContent = `🎙️ ${currentHIndex + 1}. บันทึกคำถามสุขภาพ`;
                     } else {
+                        // ✅ S4 FINALE SUCCESS: เมื่อครบจำนวนคำถาม (maxH) ให้เปิดปุ่ม "จบบทที่ 4"
                         window.updateHealthQuestionUI();
                         window.hStatusElement.textContent = `🎉 คำถามสุขภาพครบ ${maxH} ข้อแล้ว! กรุณากด 'จบบทที่ 4' เพื่อไปช่วงที่ 5`;
                         window.followUpQBtn.style.display = 'none';
@@ -1339,41 +1215,11 @@
 
             window.answerABtn.disabled = true;
 
-            // 🚨 FIX 1: Ensure controls are hidden before play attempt, and audio element is visible
-            window.agreementAudio.controls = false;
-            window.agreementAudio.style.display = 'block';
-
             const attemptPlay = () => {
                 audioEl.play().catch(error => {
-                    // 🚨 FIX 2: Autoplay Block Handler for S5
-                    window.agreementAudio.controls = true;
-                    window.aStatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก! กรุณากดปุ่ม ▶️ บนแถบเสียงลูกค้าด้านบนให้เสียงเล่นให้จบก่อน แล้วจึงบันทึกคำถามลงทะเบียนขั้นตอน ${aRound}`;
+                    window.aStatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก: ${error.message}. กรุณากดปุ่ม "🎙️ บันทึกคำถามลงทะเบียน" อีกครั้งเพื่อ "ปลดบล็อก" การเล่นเสียง`;
                     window.answerABtn.disabled = false;
-                    
-                    // Setup listener for manual play completion
-                    audioEl.onended = () => {
-                        window.agreementAudio.controls = false;
-                        window.agreementAudio.style.display = 'none'; // Hide the audio element
-                        lastCustomerAudioUrl = selectedFile;
-                        
-                        if (aRound >= maxA) {
-                            window.aStatusElement.textContent = `🎉 เสร็จสิ้นแบบทดสอบทั้งหมด! รวม ${allRecordings.length} ไฟล์รอการอัปโหลด. กรุณากด '💾 บันทึกการทดสอบเสร็จสิ้น'`;
-                            window.finalSaveBtn.disabled = false;
-                            window.answerABtn.disabled = true;
-                            window.updateStepHighlight(maxA); 
-                            return;
-                        }
-
-                        aRound++; 
-                        window.aRoundSpan.textContent = aRound; 
-                        window.updateStepHighlight(aRound); 
-
-                        const nextStepName = registrationStepNames[aRound - 1]; 
-                        
-                        window.aStatusElement.textContent = `🎤 พร้อมบันทึกคำถามลงทะเบียนขั้นตอนที่ ${aRound}: ${nextStepName}`;
-                        window.answerABtn.textContent = `🎙️ บันทึกคำถามลงทะเบียนขั้นตอน ${aRound}`;
-                        window.answerABtn.disabled = false;
-                    };
+                    audioEl.onended = null;
                     return;
                 });
                 window.aStatusElement.textContent = `🔊 กำลังเล่นเสียงตอบกลับลูกค้า (${currentStepName})...`; 
@@ -1384,12 +1230,9 @@
                 attemptPlay();
             }
             
-            // Normal onended logic (Only runs if play() was successful)
             audioEl.onended = () => {
                 // 🚨 CRUCIAL: Update lastCustomerAudioUrl here
                 lastCustomerAudioUrl = selectedFile;
-                window.agreementAudio.style.display = 'none'; // Hide the audio element
-
                 if (aRound >= maxA) {
                     window.aStatusElement.textContent = `🎉 เสร็จสิ้นแบบทดสอบทั้งหมด! รวม ${allRecordings.length} ไฟล์รอการอัปโหลด. กรุณากด '💾 บันทึกการทดสอบเสร็จสิ้น'`;
                     window.finalSaveBtn.disabled = false;
@@ -1412,7 +1255,7 @@
 
         // --- Final Save Function (Initiates Batch Upload) ---
         window.saveAllRecordings = function() {
-            const userGroup = window.inputUserGroup.value;
+            const group = window.inputUserGroup.value;
 
             if (!window.inputUserName.value.trim()) { 
                  alert("กรุณากรอกชื่อ-นามสกุล/รหัสพนักงานก่อนทำการบันทึกเสร็จสิ้น");
@@ -1420,7 +1263,7 @@
                  return;
             }
             
-            if (!userGroup) { 
+            if (!group) { 
                  alert("กรุณาเลือกกลุ่มผู้เข้าทำแบบทดสอบก่อนทำการบันทึกเสร็จสิ้น");
                  window.inputUserGroup.focus();
                  return;
@@ -1448,7 +1291,7 @@
             window.startTestBtn = document.getElementById("startTestBtn");
             window.inputUserName = document.getElementById('inputUserName'); 
             
-            // ✅ DOM ใหม่สำหรับ User Group
+            // ✅ NEW DOM for User Group
             window.inputUserGroup = document.getElementById('inputUserGroup'); 
 
             window.loadingOverlay = document.getElementById("loadingOverlay");
@@ -1457,7 +1300,6 @@
             window.certBtn = document.getElementById("certBtn");
 
             // Section 1
-            window.section1Div = document.getElementById("section1Div");
             window.turnSpan = document.getElementById("turnSpan");
             window.maxTurnSpan = document.getElementById("maxTurnSpan");
             window.s1StatusElement = document.getElementById("status"); 
@@ -1466,13 +1308,11 @@
             window.customerAudio = document.getElementById("customerAudio");
             
             // Section 1.5
-            window.section1_5Div = document.getElementById("section1_5Div");
             window.pitchRecordBtn = document.getElementById("pitchRecordBtn");
             window.nextSection2Btn = document.getElementById("nextSection2Btn");
             window.pitchStatusElement = document.getElementById("pitchStatus");
             
             // Section 2
-            window.section2Div = document.getElementById("section2Div");
             window.qRoundSpan = document.getElementById("qRound");
             window.maxQSpan = document.getElementById("maxQSpan");
             window.s2StatusElement = document.getElementById("qStatus"); 
@@ -1482,7 +1322,6 @@
             window.questionAudio = document.getElementById("questionAudio");
             
             // Section 3
-            window.section3Div = document.getElementById("section3Div");
             window.cRoundSpan = document.getElementById("cRound");
             window.maxCSpan = document.getElementById("maxCSpan");
             window.s3StatusElement = document.getElementById("cStatus"); 
@@ -1492,14 +1331,13 @@
             window.nextSection4Btn = document.getElementById("nextSection4Btn");
             
             // Section 4
-            window.section4Div = document.getElementById("section4Div");
             window.hQName = document.getElementById("hQName");
             window.hStatusElement = document.getElementById("hStatus");
             window.answerHBtn = document.getElementById("answerHBtn");
             window.nextSection5Btn = document.getElementById("nextSection5Btn");
             window.healthAudio = document.getElementById("healthAudio");
             
-            // Dynamic Button for S4
+            // Dynamic Button for S4 (Ensure it's created if not exists in HTML)
             window.followUpQBtn = document.createElement('button'); 
             window.followUpQBtn.id = 'followUpQBtn';
             window.followUpQBtn.style.display = 'none';
@@ -1514,7 +1352,6 @@
             }
             
             // Section 5
-            window.section5Div = document.getElementById("section5Div");
             window.aRoundSpan = document.getElementById("aRound");
             window.maxASpan = document.getElementById("maxASpan");
             window.aStatusElement = document.getElementById("aStatus"); 
@@ -1553,7 +1390,7 @@
 
         window.startTest = function() {
             const userName = window.inputUserName.value.trim();
-            const userGroup = window.inputUserGroup.value;
+            const group = window.inputUserGroup.value;
 
             if (!userName) {
                 alert("กรุณากรอกชื่อ-นามสกุล/รหัสพนักงานก่อนเริ่มทำแบบทดสอบ");
@@ -1561,7 +1398,8 @@
                 return;
             }
             
-            if (!userGroup) {
+            // 🚨 NEW: Check User Group
+            if (!group) {
                 alert("กรุณาเลือกกลุ่มผู้เข้าทำแบบทดสอบก่อนเริ่มทำแบบทดสอบ");
                 window.inputUserGroup.focus();
                 return;
@@ -1570,6 +1408,7 @@
             const selectedDifficulty = document.querySelector('input[name="difficulty"]:checked').value;
             const config = difficultyConfig[selectedDifficulty];
 
+            userGroup = group; // Set Global User Group
             maxTurns = config.S1;
             maxQ = config.S2;
             maxC = config.S3;
