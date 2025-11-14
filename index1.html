@@ -420,7 +420,7 @@
 
         // ** FIXED S1 FINAL FILE: Pinned to Index 7 (Q9) **
         window.prepareTurnFiles = function() {
-            // Index 7 คือไฟล์ Q9 (FINAL)
+            // Index 7 คือไฟล์ Q9
             const S1_FINAL_FILE_INDEX = 7; 
             const finaleFile = allCustomerReplies[S1_FINAL_FILE_INDEX]; 
             
@@ -506,6 +506,7 @@
 
 
         // --- BATCH UPLOAD Logic (Store to Array) ---
+        // 🚨 MODIFIED: Added customerAudioUrl argument to store in array
         window.storeRecording = function(audioBlob, part, qNum, qText, customerAudioUrl = 'N/A') {
             allRecordings.push({ audioBlob, part, qNum, qText, customerAudioUrl });
             console.log(`✅ Recording saved locally: P${part}-Q${qNum}. Total recordings: ${allRecordings.length}`);
@@ -536,6 +537,7 @@
             let successfulUploads = 0;
 
             for (let i = 0; i < totalRecordings; i++) {
+                // 🚨 MODIFIED: Retrieve customerAudioUrl
                 const { audioBlob, part, qNum, qText, customerAudioUrl } = allRecordings[i];
                 const currentProgress = Math.floor(((i + 1) / totalRecordings) * 100);
 
@@ -551,10 +553,12 @@
                     partStr = `S${part}`;
                 }
 
-                let question_number_to_insert = qNum; 
+                // *** FIX for Supabase 400 Error (Question Number must be Integer) ***
+                let question_number_to_insert = qNum; // Default for S1, S2, S3, S5
                 if (part === 4 && qNum > 5) {
                     question_number_to_insert = Math.round(qNum); 
                 }
+                // *******************************************************************
                 
                 const qStr = (part === 1 && qNum === maxTurns) ? 'FINALE' : `Q${qNum}`;
                 const fileName = `${currentUserId}/${partStr}/${qStr}_${uuidv4()}.webm`; 
@@ -581,6 +585,7 @@
                                 audio_url: publicUrl, // Employee Audio URL
                                 duration_seconds: audioBlob.size > 0 ? (audioBlob.size / 100000) : 0,
                                 user_group: userGroup,
+                                // 🚨 CRUCIAL ADDITION: Customer Audio URL
                                 customer_audio_url: customerAudioUrl
                             }
                         ]);
@@ -617,7 +622,7 @@
             let currentCustomerUrl = lastCustomerAudioUrl; 
             if (type === 3) currentCustomerUrl = 'S3 Closing Script (No Customer Audio)';
             if (type === 8) currentCustomerUrl = 'S1.5 Pitch (No Customer Audio)';
-            if (type === 1) currentCustomerUrl = (turn > 0) ? lastCustomerAudioUrl : 'S1 Initial Greeting (No Customer Audio)'; 
+            if (type === 1) currentCustomerUrl = (turn > 0) ? lastCustomerAudioUrl : 'S1 Initial Greeting (No Customer Audio)'; // S1 uses lastTurn's audio as current turn's context
             
             // *** MAPPING LOGIC FOR UPLOAD METADATA ***
             if (type === 1) { 
@@ -705,6 +710,7 @@
                     mediaRecorder.onstop = () => {
                         const audioBlob = new Blob(chunks, { type: 'audio/webm' });
                         if (audioBlob.size > 0) {
+                            // 🚨 MODIFIED: Passing currentCustomerUrl to storeRecording
                             window.storeRecording(audioBlob, part, qNum, qText, currentCustomerUrl);
                         } else {
                             console.warn("Recording stopped with 0 size data. Not saving.");
@@ -789,6 +795,7 @@
                                 window.s1StatusElement.textContent = `🎤 พร้อมบันทึกเสียงโต้ตอบของพนักงาน (เทิร์นที่ ${turn + 1})`;
                                 window.recordBtn.disabled = false;
                             } else {
+                                // 🚨 FINALE PATH: Unlock next section button
                                 window.s1StatusElement.textContent = `🎉 เสร็จสิ้นบทสนทนาต้นสาย ${maxTurns} ข้อแล้ว (จบที่ข้อ 9)!
 กรุณากดปุ่ม "จบบทที่ 1"`;
                                 window.nextRoundBtn.disabled = false;
@@ -820,6 +827,7 @@
                         window.s1StatusElement.textContent = `🎤 พร้อมบันทึกเสียงโต้ตอบของพนักงาน (เทิร์นที่ ${turn + 1})`;
                         window.recordBtn.disabled = false;
                     } else {
+                        // 🚨 FINALE PATH: Unlock next section button
                         window.s1StatusElement.textContent = `🎉 เสร็จสิ้นบทสนทนาต้นสาย ${maxTurns} ข้อแล้ว (จบที่ข้อ 9)!
 กรุณากดปุ่ม "จบบทที่ 1"`;
                         window.nextRoundBtn.disabled = false;
