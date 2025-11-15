@@ -511,10 +511,10 @@
 
 
         // --- BATCH UPLOAD Logic (Store to Array) ---
-        // 🚨 MODIFIED: Implemented customerAudioUrl argument to store in array
+        // 🚨 MODIFIED: Added customerAudioUrl argument to store in array
         window.storeRecording = function(audioBlob, part, qNum, qText, customerAudioUrl = 'N/A') {
             allRecordings.push({ audioBlob, part, qNum, qText, customerAudioUrl });
-            console.log(`✅ Recording saved locally: P${part}-Q${qNum}. Customer Audio URL: ${customerAudioUrl}. Total recordings: ${allRecordings.length}`);
+            console.log(`✅ Recording saved locally: P${part}-Q${qNum}. Total recordings: ${allRecordings.length}`);
             
             const statusElement = (part === 1) ? window.s1StatusElement : 
                                   (part === 15) ? window.pitchStatusElement : 
@@ -542,7 +542,7 @@
             let successfulUploads = 0;
 
             for (let i = 0; i < totalRecordings; i++) {
-                // 🚨 MODIFIED: Retrieve customerAudioUrl from allRecordings
+                // 🚨 MODIFIED: Retrieve customerAudioUrl
                 const { audioBlob, part, qNum, qText, customerAudioUrl } = allRecordings[i];
                 const currentProgress = Math.floor(((i + 1) / totalRecordings) * 100);
 
@@ -589,10 +589,11 @@
                                 question_text: qText + ` (Diff: ${difficulty})`, 
                                 audio_url: publicUrl, // Employee Audio URL
                                 duration_seconds: audioBlob.size > 0 ? (audioBlob.size / 100000) : 0,
-                                // 🚨 CRUCIAL ADDITION: User Group, Customer Audio URL และ INSURANCE TYPE
+                                // 🚨 CRUCIAL ADDITION: User Group & Customer Audio URL
                                 user_group: group,
-                                customer_audio_url: customerAudioUrl, // <<-- นี่คือการบันทึก URL ไฟล์เสียงลูกค้า
-                                insurance_type: 'Health' // <-- เพิ่มค่าคงที่ 'Health'
+                                customer_audio_url: customerAudioUrl,
+                                // 🚨 CRITICAL FIX: เพิ่ม insurance_type สำหรับ Dashboard Filter
+                                **insurance_type: 'Health'**
                             }
                         ]);
                     if (insertError) { throw insertError; }
@@ -624,12 +625,11 @@
             let statusElement, buttonElement, nextAutoAction, originalButtonText;
             let part, qNum, qText, chunks = [];
             
-            // 🚨 MODIFIED: Capture Customer URL state based on section logic
+            // 🚨 MODIFIED: Capture Customer URL state
             let currentCustomerUrl = lastCustomerAudioUrl; 
             if (type === 3) currentCustomerUrl = 'S3 Closing Script (No Customer Audio)';
             if (type === 8) currentCustomerUrl = 'S1.5 Pitch (No Customer Audio)';
             if (type === 1) currentCustomerUrl = (turn > 0) ? lastCustomerAudioUrl : 'S1 Initial Greeting (No Customer Audio)'; 
-            if (type === 6) currentCustomerUrl = 'S5 Registration (Customer Reply URL will be saved after play)'; 
             
             // *** MAPPING LOGIC FOR UPLOAD METADATA ***
             if (type === 1) { 
@@ -673,7 +673,6 @@
                 buttonElement = window.answerHBtn; 
                 nextAutoAction = window.playFixedHealthQuestion; 
                 originalButtonText = '🎙️ 1. บันทึกคำถามสุขภาพ';
-                currentCustomerUrl = 'S4 Health Q' + (currentHIndex + 1) + ' (Main Script)'; // No audio response before this script
             } 
             else if (type === 7) { 
                 part = 4; 
@@ -681,7 +680,6 @@
                 qNum = baseNum * 10 + followUpStep; 
                 qText = `S4: ซักประวัติ ${H_DISEASE_DATA[0].name} Q${baseNum}.F${followUpStep}: ${H_FOLLOW_UP_NAMES[followUpStep - 1]}`;
                 statusElement = window.hStatusElement;
-                // ต้องสร้างปุ่ม FollowUpQBtn
                 buttonElement = window.followUpQBtn; 
                 nextAutoAction = window.playFixedFollowUpQuestion; 
                 originalButtonText = `🎙️ บันทึกคำถามซักประวัติ Q${followUpStep}`;
@@ -694,7 +692,6 @@
                 buttonElement = window.answerABtn; 
                 nextAutoAction = window.playCustomerReplyAndSetupNextStep; 
                 originalButtonText = `🎙️ บันทึกคำถามลงทะเบียนขั้นตอน ${aRound}`;
-                currentCustomerUrl = 'S5 Registration Step ' + aRound + ' (Main Script)'; // No audio response before this script
             }
             else { 
                 console.error("Unknown recording type:", type);
@@ -720,7 +717,7 @@
                     mediaRecorder.onstop = () => {
                         const audioBlob = new Blob(chunks, { type: 'audio/webm' });
                         if (audioBlob.size > 0) {
-                            // 🚨 CRUCIAL: Passing currentCustomerUrl to storeRecording
+                            // 🚨 MODIFIED: Passing currentCustomerUrl to storeRecording
                             window.storeRecording(audioBlob, part, qNum, qText, currentCustomerUrl);
                         } else {
                             console.warn("Recording stopped with 0 size data. Not saving.");
@@ -781,29 +778,20 @@
                 const audioEl = window.getCachedAudioElement(fileToPlay, true);
                 window.customerAudio = audioEl;
 
-                // 🚨 CRUCIAL: Pre-update URL here in case playback fails/is blocked
-                lastCustomerAudioUrl = fileToPlay;
-                
+                // 🚨 MODIFIED: ลบการอ้างอิงถึง Q9 ทิ้ง เพื่อให้ยืดหยุ่นตาม maxTurns
                 const fileDescription = isFinalCustomerTurn ? `โต้ตอบสุดท้าย (T${maxTurns})` : `โต้ตอบที่ ${turn}`;
                 
                 const attemptPlay = () => {
                     window.s1StatusElement.textContent = `🔊 กำลังเล่นเสียงลูกค้า (${fileDescription})...`;
-                    
-                    audioEl.play().then(() => {
-                        // Playback succeeded (onended will handle next step)
-                    }).catch(error => {
-                        // 🚨 FIX: Handle Autoplay Policy Block
-                        window.s1StatusElement.textContent = `❌ การเล่นเสียงลูกค้าถูกเบราว์เซอร์บล็อก (Autoplay): ${error.message}. 
-${isFinalCustomerTurn 
-    ? 'กรุณากดปุ่ม "✅ จบบทที่ 1"' 
-    : 'กรุณากดปุ่ม "🎙️ เริ่มบันทึกเสียง (พนักงาน)" เพื่อเป็นการโต้ตอบ (Interaction) ที่จะปลดบล็อกการเล่นเสียงลูกค้าได้'}`; 
+                    audioEl.play().catch(error => {
+                        // 🚨 FIX 1: จัดการ Autoplay Block ในเทิร์นสุดท้ายโดยเฉพาะ (Safety Net)
+                        window.s1StatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก: ${error.message}. 
+${isFinalCustomerTurn ? 'กรุณากดปุ่ม "จบบทที่ 1"' : 'กรุณากดปุ่ม "🎙️ เริ่มบันทึกเสียง (พนักงาน)" เพื่อลองอีกครั้ง'}`; 
                         
-                        // เปิดปุ่มให้พนักงานกดเพื่อ "ปลดบล็อก" หรือจบงาน
                         if (isFinalCustomerTurn) {
                             window.nextRoundBtn.disabled = false;
                             window.recordBtn.disabled = true;
                         } else {
-                            // เปิดปุ่มบันทึกเสียงพนักงานเพื่อให้เกิด User Interaction
                             window.recordBtn.disabled = false;
                         }
                     });
@@ -819,7 +807,8 @@ ${isFinalCustomerTurn
                     audioEl.onloadeddata = null;
                     audioEl.onended = null;
                     
-                    // lastCustomerAudioUrl ถูกตั้งไว้ก่อนหน้าแล้ว
+                    // 🚨 CRUCIAL: Update lastCustomerAudioUrl here
+                    lastCustomerAudioUrl = fileToPlay;
                     
                     if (!isFinalCustomerTurn) { // ถ้าไม่ใช่เทิร์นสุดท้าย ให้บันทึกต่อ
                         window.s1StatusElement.textContent = `🎤 พร้อมบันทึกเสียงโต้ตอบของพนักงาน (เทิร์นที่ ${turn + 1})`;
@@ -827,7 +816,7 @@ ${isFinalCustomerTurn
                     } else { // ถ้าเป็นเทิร์นสุดท้าย ให้จบส่วน
                         // 🚨 MODIFIED: ลบการอ้างอิงถึง Q9 ทิ้ง 
                         window.s1StatusElement.textContent = `🎉 เสร็จสิ้นบทสนทนาต้นสาย ${maxTurns} ข้อแล้ว!
-กรุณากดปุ่ม "✅ จบบทที่ 1"`;
+กรุณากดปุ่ม "จบบทที่ 1"`;
                         window.nextRoundBtn.disabled = false; // เปิดปุ่มไปส่วนถัดไป
                         window.recordBtn.disabled = true;
                     }
@@ -872,7 +861,7 @@ ${isFinalCustomerTurn
 
         window.endPitchRecording = function() {
             window.pitchStatusElement.textContent = `🎉 เสร็จสิ้นการบันทึกเสียงนำเสนอแล้ว!
-กรุณากดปุ่ม "✅ จบบทที่ 1.5"`;
+กรุณากดปุ่ม "จบบทที่ 1.5"`;
             window.nextSection2Btn.disabled = false;
             window.pitchRecordBtn.disabled = true;
         }
@@ -892,7 +881,7 @@ ${isFinalCustomerTurn
             window.nextSection3Btn.disabled = true;
             qRound = 0;
             lastCustomerAudioUrl = 'S2 Initial Q (Press Start)'; // Reset for S2 start
-            window.s2StatusElement.textContent = "✅ ช่วงที่ 1.5 เสร็จสิ้น! กด '🔊 เริ่มคำถามลูกค้า' เพื่อเริ่มช่วงที่ 2"; 
+            window.s2StatusElement.textContent = "✅ ช่วงที่ 1.5 เสร็จสิ้น! กด 'เริ่มคำถามลูกค้า' เพื่อเริ่มช่วงที่ 2"; 
             alert("จบบทที่ 1.5 แล้ว! เริ่มช่วงที่ 2: ตอบคำถามลูกค้า");
         }
 
@@ -900,7 +889,7 @@ ${isFinalCustomerTurn
         window.playSequentialQuestion = function() {
             if (qRound >= maxQ) {
                 window.s2StatusElement.textContent = `🎉 คำถามครบ ${maxQ} ข้อแล้ว!
-กรุณากด '✅ จบบทที่ 2' เพื่อไปช่วงที่ 3`;
+กรุณากด 'จบบทที่ 2' เพื่อไปช่วงที่ 3`;
                 window.nextSection3Btn.disabled = false;
                 window.startQBtn.disabled = true;
                 window.answerBtn.disabled = true;
@@ -917,21 +906,15 @@ ${isFinalCustomerTurn
             window.s2StatusElement.textContent = "⏳ กำลังโหลดคำถามลูกค้า...";
             window.startQBtn.disabled = true;
             window.answerBtn.disabled = true;
-
-            // 🚨 CRUCIAL: Pre-update URL here in case playback fails/is blocked
-            lastCustomerAudioUrl = selectedFile; 
             
             const attemptPlay = () => {
-                window.s2StatusElement.textContent = `🔊 กำลังเล่นคำถามที่ ${qRound}/${maxQ}...`; 
-                audioEl.play().then(() => {
-                    // Playback succeeded (onended will handle next step)
-                }).catch(error => {
-                    // 🚨 FIX: Handle Autoplay Policy Block
-                    window.s2StatusElement.textContent = `❌ การเล่นเสียงลูกค้าถูกเบราว์เซอร์บล็อก (Autoplay): ${error.message}. 
-กรุณากดปุ่ม "🎙️ เริ่มบันทึกคำตอบ" เพื่อเป็นการโต้ตอบ (Interaction) ที่จะปลดบล็อกการเล่นเสียงลูกค้าได้`; 
-                    window.answerBtn.disabled = false; // เปิดปุ่มให้โต้ตอบ
-                    window.startQBtn.disabled = true;
+                audioEl.play().catch(error => { // Add catch for Autoplay Policy
+                     window.s2StatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก: ${error.message}. กรุณากดปุ่ม '🔊 เริ่มคำถามลูกค้า' อีกครั้ง`; 
+                     window.startQBtn.disabled = false;
+                     audioEl.onended = null;
+                     return;
                 });
+                window.s2StatusElement.textContent = `🔊 กำลังเล่นคำถามที่ ${qRound}/${maxQ}...`; 
             };
             
             audioEl.onloadeddata = attemptPlay;
@@ -940,7 +923,8 @@ ${isFinalCustomerTurn
             }
             
             audioEl.onended = () => {
-                // lastCustomerAudioUrl ถูกตั้งไว้ก่อนหน้าแล้ว
+                // 🚨 CRUCIAL: Update lastCustomerAudioUrl here
+                lastCustomerAudioUrl = selectedFile;
                 window.s2StatusElement.textContent = "🎤 พร้อมบันทึกคำตอบ";
                 window.answerBtn.disabled = false;
                 if (qRound === 1) window.startQBtn.style.display = 'none';
@@ -972,7 +956,7 @@ ${isFinalCustomerTurn
         window.playSequentialObjectionAuto = function() {
             if (cRound >= maxC) {
                 // FIX: Enable the button to S4
-                window.s3StatusElement.textContent = "🎉 เสร็จสิ้นช่วงที่ 3! กรุณากด '✅ จบบทที่ 3' เพื่อไปช่วงที่ 4";
+                window.s3StatusElement.textContent = "🎉 เสร็จสิ้นช่วงที่ 3! กรุณากด 'จบบทที่ 3' เพื่อไปช่วงที่ 4";
                 window.replyBtn.disabled = true;
                 window.closeBtn.style.display = 'none'; 
                 window.nextSection4Btn.disabled = false; // ENABLED
@@ -1001,19 +985,14 @@ ${isFinalCustomerTurn
             const audioEl = window.getCachedAudioElement(selectedFile, true);
             window.objectionAudio = audioEl;
 
-            // 🚨 CRUCIAL: Pre-update URL here in case playback fails/is blocked
-            lastCustomerAudioUrl = selectedFile;
-
             const attemptPlay = () => {
-                window.s3StatusElement.textContent = `🔊 กำลังเล่นข้อโต้แย้งลูกค้า (รอบที่ ${cRound}/${maxC})...`; 
-                audioEl.play().then(() => {
-                    // Playback succeeded (onended will handle next step)
-                }).catch(error => {
-                    // 🚨 FIX: Handle Autoplay Policy Block
-                    window.s3StatusElement.textContent = `❌ การเล่นเสียงลูกค้าถูกเบราว์เซอร์บล็อก (Autoplay): ${error.message}. 
-กรุณากดปุ่ม "🎙️ 2. บันทึกเสียงตอบข้อโต้แย้ง" เพื่อเป็นการโต้ตอบ (Interaction) ที่จะปลดบล็อกการเล่นเสียงลูกค้าได้`;
-                    window.replyBtn.disabled = false; // เปิดปุ่มให้โต้ตอบ
+                audioEl.play().catch(error => {
+                    window.s3StatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก: ${error.message}. กรุณากดปุ่ม "🎙️ 2. บันทึกเสียงตอบข้อโต้แย้ง" อีกครั้งเพื่อ "ปลดบล็อก" การเล่นเสียง`;
+                    window.replyBtn.disabled = false;
+                    audioEl.onended = null;
+                    return;
                 });
+                window.s3StatusElement.textContent = `🔊 กำลังเล่นข้อโต้แย้งลูกค้า (รอบที่ ${cRound}/${maxC})...`; 
             };
             
             audioEl.onloadeddata = attemptPlay;
@@ -1022,7 +1001,8 @@ ${isFinalCustomerTurn
             }
 
             audioEl.onended = () => {
-                // lastCustomerAudioUrl ถูกตั้งไว้ก่อนหน้าแล้ว
+                // 🚨 CRUCIAL: Update lastCustomerAudioUrl here
+                lastCustomerAudioUrl = selectedFile;
                 window.s3StatusElement.textContent = "🎤 พร้อมบันทึกเสียงตอบกลับข้อโต้แย้ง";
                 window.replyBtn.disabled = false;
                 window.replyBtn.textContent = `🎙️ ${cRound === maxC ? maxC + '. บันทึกเสียงตอบข้อโต้แย้งสุดท้าย' : (cRound + 1) + '. บันทึกเสียงตอบข้อโต้แย้ง'}`;
@@ -1035,7 +1015,7 @@ ${isFinalCustomerTurn
                 setTimeout(window.playSequentialObjectionAuto, 50); 
             } else {
                 // FIX: Enable the button to S4
-                window.s3StatusElement.textContent = "🎉 เสร็จสิ้นช่วงที่ 3! กรุณากด '✅ จบบทที่ 3' เพื่อไปช่วงที่ 4";
+                window.s3StatusElement.textContent = "🎉 เสร็จสิ้นช่วงที่ 3! กรุณากด 'จบบทที่ 3' เพื่อไปช่วงที่ 4";
                 window.replyBtn.disabled = true;
                 window.closeBtn.style.display = 'none';
                 window.nextSection4Btn.disabled = false; // ENABLED
@@ -1093,21 +1073,15 @@ ${isFinalCustomerTurn
             const audioEl = window.getCachedAudioElement(customerReplyUrl, true);
             window.healthAudio = audioEl;
 
-            // 🚨 CRUCIAL: Pre-update URL here in case playback fails/is blocked
-            lastCustomerAudioUrl = isYes ? customerReplyUrl : NO_ANSWER_URL;
-
             const attemptPlay = () => {
+                audioEl.play().catch(error => {
+                    window.hStatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก: ${error.message}. กรุณากดปุ่ม "🎙️ 1. บันทึกคำถามสุขภาพ" อีกครั้งเพื่อ "ปลดบล็อก" การเล่นเสียง`;
+                    window.answerHBtn.disabled = false;
+                    audioEl.onended = null;
+                    return;
+                });
                 const replyText = isYes ? `ใช่ (โรค: ${selectedDisease.name})` : `ไม่เคยค่ะ/ครับ`;
                 window.hStatusElement.textContent = `🔊 กำลังเล่นคำตอบลูกค้า: "${replyText}"...`;
-                
-                audioEl.play().then(() => {
-                    // Playback succeeded
-                }).catch(error => {
-                    // 🚨 FIX: Handle Autoplay Policy Block
-                    window.hStatusElement.textContent = `❌ การเล่นเสียงลูกค้าถูกเบราว์เซอร์บล็อก (Autoplay): ${error.message}. 
-กรุณากดปุ่ม "🎙️ 1. บันทึกคำถามสุขภาพ" อีกครั้งเพื่อเป็นการโต้ตอบ (Interaction) ที่จะปลดบล็อกการเล่นเสียงลูกค้าได้`;
-                    window.answerHBtn.disabled = false; // เปิดปุ่มให้โต้ตอบ
-                });
             };
             
             audioEl.onloadeddata = attemptPlay;
@@ -1119,7 +1093,8 @@ ${isFinalCustomerTurn
                 audioEl.onloadeddata = null;
                 audioEl.onended = null;
                 
-                // lastCustomerAudioUrl ถูกตั้งไว้ก่อนหน้าแล้ว
+                // 🚨 CRUCIAL: Update lastCustomerAudioUrl here
+                lastCustomerAudioUrl = isYes ? customerReplyUrl : NO_ANSWER_URL; 
 
                 if (isYes) {
                     isFollowUpMode = true; 
@@ -1140,7 +1115,7 @@ ${isFinalCustomerTurn
                         window.answerHBtn.textContent = `🎙️ ${currentHIndex + 1}. บันทึกคำถามสุขภาพ`;
                     } else {
                         window.updateHealthQuestionUI();
-                        window.hStatusElement.textContent = `🎉 คำถามสุขภาพครบ ${maxH} ข้อแล้ว! กรุณากด '✅ จบบทที่ 4' เพื่อไปช่วงที่ 5`;
+                        window.hStatusElement.textContent = `🎉 คำถามสุขภาพครบ ${maxH} ข้อแล้ว! กรุณากด 'จบบทที่ 4' เพื่อไปช่วงที่ 5`;
                         window.nextSection5Btn.disabled = false;
                         window.answerHBtn.disabled = true;
                     }
@@ -1158,19 +1133,14 @@ ${isFinalCustomerTurn
             const audioEl = window.getCachedAudioElement(customerReplyUrl, true);
             window.healthAudio = audioEl;
 
-            // 🚨 CRUCIAL: Pre-update URL here in case playback fails/is blocked
-            lastCustomerAudioUrl = customerReplyUrl;
-
             const attemptPlay = () => {
-                window.hStatusElement.textContent = `🔊 กำลังเล่นคำตอบลูกค้าสำหรับ Q${followUpStep}...`;
-                audioEl.play().then(() => {
-                    // Playback succeeded
-                }).catch(error => {
-                    // 🚨 FIX: Handle Autoplay Policy Block
-                    window.hStatusElement.textContent = `❌ การเล่นเสียงลูกค้าถูกเบราว์เซอร์บล็อก (Autoplay): ${error.message}. 
-กรุณากดปุ่ม "🎙️ บันทึกคำถามซักประวัติ" อีกครั้งเพื่อเป็นการโต้ตอบ (Interaction) ที่จะปลดบล็อกการเล่นเสียงลูกค้าได้`;
-                    window.followUpQBtn.disabled = false; // เปิดปุ่มให้โต้ตอบ
+                audioEl.play().catch(error => {
+                    window.hStatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก: ${error.message}. กรุณากดปุ่ม "🎙️ บันทึกคำถามซักประวัติ" อีกครั้งเพื่อ "ปลดบล็อก" การเล่นเสียง`;
+                    window.followUpQBtn.disabled = false;
+                    audioEl.onended = null;
+                    return;
                 });
+                window.hStatusElement.textContent = `🔊 กำลังเล่นคำตอบลูกค้าสำหรับ Q${followUpStep}...`;
             };
             
             audioEl.onloadeddata = attemptPlay;
@@ -1179,7 +1149,8 @@ ${isFinalCustomerTurn
             }
             
             audioEl.onended = () => {
-                // lastCustomerAudioUrl ถูกตั้งไว้ก่อนหน้าแล้ว
+                // 🚨 CRUCIAL: Update lastCustomerAudioUrl here
+                lastCustomerAudioUrl = customerReplyUrl;
                 followUpStep++; 
 
                 if (followUpStep > maxFollowUp) { 
@@ -1195,7 +1166,7 @@ ${isFinalCustomerTurn
                         window.answerHBtn.textContent = `🎙️ ${currentHIndex + 1}. บันทึกคำถามสุขภาพ`;
                     } else {
                         window.updateHealthQuestionUI();
-                        window.hStatusElement.textContent = `🎉 คำถามสุขภาพครบ ${maxH} ข้อแล้ว! กรุณากด '✅ จบบทที่ 4' เพื่อไปช่วงที่ 5`;
+                        window.hStatusElement.textContent = `🎉 คำถามสุขภาพครบ ${maxH} ข้อแล้ว! กรุณากด 'จบบทที่ 4' เพื่อไปช่วงที่ 5`;
                         window.followUpQBtn.style.display = 'none';
                         window.answerHBtn.style.display = 'none';
                         window.nextSection5Btn.disabled = false;
@@ -1253,19 +1224,14 @@ ${isFinalCustomerTurn
 
             window.answerABtn.disabled = true;
 
-            // 🚨 CRUCIAL: Pre-update URL here in case playback fails/is blocked
-            lastCustomerAudioUrl = selectedFile;
-
             const attemptPlay = () => {
-                window.aStatusElement.textContent = `🔊 กำลังเล่นเสียงตอบกลับลูกค้า (${currentStepName})...`;
-                audioEl.play().then(() => {
-                    // Playback succeeded
-                }).catch(error => {
-                    // 🚨 FIX: Handle Autoplay Policy Block
-                    window.aStatusElement.textContent = `❌ การเล่นเสียงลูกค้าถูกเบราว์เซอร์บล็อก (Autoplay): ${error.message}. 
-กรุณากดปุ่ม "🎙️ บันทึกคำถามลงทะเบียน" อีกครั้งเพื่อเป็นการโต้ตอบ (Interaction) ที่จะปลดบล็อกการเล่นเสียงลูกค้าได้`;
-                    window.answerABtn.disabled = false; // เปิดปุ่มให้โต้ตอบ
+                audioEl.play().catch(error => {
+                    window.aStatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก: ${error.message}. กรุณากดปุ่ม "🎙️ บันทึกคำถามลงทะเบียน" อีกครั้งเพื่อ "ปลดบล็อก" การเล่นเสียง`;
+                    window.answerABtn.disabled = false;
+                    audioEl.onended = null;
+                    return;
                 });
+                window.aStatusElement.textContent = `🔊 กำลังเล่นเสียงตอบกลับลูกค้า (${currentStepName})...`; 
             };
             
             audioEl.onloadeddata = attemptPlay;
@@ -1274,7 +1240,8 @@ ${isFinalCustomerTurn
             }
             
             audioEl.onended = () => {
-                // lastCustomerAudioUrl ถูกตั้งไว้ก่อนหน้าแล้ว
+                // 🚨 CRUCIAL: Update lastCustomerAudioUrl here
+                lastCustomerAudioUrl = selectedFile;
                 if (aRound >= maxA) {
                     window.aStatusElement.textContent = `🎉 เสร็จสิ้นแบบทดสอบทั้งหมด! รวม ${allRecordings.length} ไฟล์รอการอัปโหลด. กรุณากด '💾 บันทึกการทดสอบเสร็จสิ้น'`;
                     window.finalSaveBtn.disabled = false;
