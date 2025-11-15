@@ -511,10 +511,10 @@
 
 
         // --- BATCH UPLOAD Logic (Store to Array) ---
-        // 🚨 MODIFIED: Added customerAudioUrl argument to store in array
+        // 🚨 CRITICAL FIX: ต้องรับ customerAudioUrl เป็น parameter และเก็บไว้ใน allRecordings
         window.storeRecording = function(audioBlob, part, qNum, qText, customerAudioUrl = 'N/A') {
             allRecordings.push({ audioBlob, part, qNum, qText, customerAudioUrl });
-            console.log(`✅ Recording saved locally: P${part}-Q${qNum}. Total recordings: ${allRecordings.length}`);
+            console.log(`✅ Recording saved locally: P${part}-Q${qNum}. Customer Audio URL: ${customerAudioUrl}. Total recordings: ${allRecordings.length}`);
             
             const statusElement = (part === 1) ? window.s1StatusElement : 
                                   (part === 15) ? window.pitchStatusElement : 
@@ -542,7 +542,7 @@
             let successfulUploads = 0;
 
             for (let i = 0; i < totalRecordings; i++) {
-                // 🚨 MODIFIED: Retrieve customerAudioUrl
+                // 🚨 CRITICAL FIX: ดึง customerAudioUrl จาก allRecordings
                 const { audioBlob, part, qNum, qText, customerAudioUrl } = allRecordings[i];
                 const currentProgress = Math.floor(((i + 1) / totalRecordings) * 100);
 
@@ -589,11 +589,10 @@
                                 question_text: qText + ` (Diff: ${difficulty})`, 
                                 audio_url: publicUrl, // Employee Audio URL
                                 duration_seconds: audioBlob.size > 0 ? (audioBlob.size / 100000) : 0,
-                                // 🚨 CRUCIAL ADDITION: User Group & Customer Audio URL
+                                // 🚨 CRITICAL ADDITION: Customer Audio URL และ INSURANCE TYPE
                                 user_group: group,
                                 customer_audio_url: customerAudioUrl,
-                                // 🚨 CRITICAL FIX: เพิ่ม insurance_type สำหรับ Dashboard Filter
-                                **insurance_type: 'Health'**
+                                **insurance_type: 'Health'** // <-- เพิ่มค่าคงที่ 'Health'
                             }
                         ]);
                     if (insertError) { throw insertError; }
@@ -625,12 +624,15 @@
             let statusElement, buttonElement, nextAutoAction, originalButtonText;
             let part, qNum, qText, chunks = [];
             
-            // 🚨 MODIFIED: Capture Customer URL state
+            // 🚨 CRITICAL MODIFICATION: Capture Customer URL state
             let currentCustomerUrl = lastCustomerAudioUrl; 
             if (type === 3) currentCustomerUrl = 'S3 Closing Script (No Customer Audio)';
             if (type === 8) currentCustomerUrl = 'S1.5 Pitch (No Customer Audio)';
             if (type === 1) currentCustomerUrl = (turn > 0) ? lastCustomerAudioUrl : 'S1 Initial Greeting (No Customer Audio)'; 
-            
+            if (type === 5) currentCustomerUrl = lastCustomerAudioUrl; // Use last URL played (Q1-Q5, or Follow-up)
+            if (type === 7) currentCustomerUrl = lastCustomerAudioUrl; // Use last URL played (Follow-up response)
+            if (type === 6) currentCustomerUrl = 'S5 Registration Step ' + aRound + ' (Employee Script)';
+
             // *** MAPPING LOGIC FOR UPLOAD METADATA ***
             if (type === 1) { 
                 part = 1; qNum = turn + 1; qText = `S1: เปิดตัว/โต้ตอบต้นสาย T${qNum}`;
@@ -717,7 +719,7 @@
                     mediaRecorder.onstop = () => {
                         const audioBlob = new Blob(chunks, { type: 'audio/webm' });
                         if (audioBlob.size > 0) {
-                            // 🚨 MODIFIED: Passing currentCustomerUrl to storeRecording
+                            // 🚨 CRITICAL MODIFICATION: ส่ง currentCustomerUrl ไปบันทึก
                             window.storeRecording(audioBlob, part, qNum, qText, currentCustomerUrl);
                         } else {
                             console.warn("Recording stopped with 0 size data. Not saving.");
@@ -794,6 +796,7 @@ ${isFinalCustomerTurn ? 'กรุณากดปุ่ม "จบบทที�
                         } else {
                             window.recordBtn.disabled = false;
                         }
+                        lastCustomerAudioUrl = fileToPlay; // 🚨 FIX: อัปเดต URL แม้เล่นอัตโนมัติล้มเหลว
                     });
                 };
                 
