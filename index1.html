@@ -267,7 +267,7 @@
         
         let allRecordings = []; 
         
-        // 🚨 GLOBAL STATE FOR CUSTOMER AUDIO URL & USER GROUP
+        // 🚨 GLOBAL STATE FOR CUSTOMER AUDIO URL & USER GROUP (FIXED/CONFIRMED)
         let lastCustomerAudioUrl = 'N/A';
         let userGroup = ''; 
         
@@ -301,7 +301,7 @@
 
         // S1: เปิดตัว/โต้ตอบต้นสาย (URL จาก Test.thml.txt)
         const allCustomerReplies = [
-            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q1_fe75e00d-70f8-429a-806f-ae77f5cde2de.webm", // Index 0 (Q1)
+            "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q1_fe75e00d-70f8-429a-a3ca-9e9b87a5f2de.webm", // Index 0 (Q1)
             "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q2_a68fb010-ec6c-47c2-95b2-d839553fe4e7.webm", // Index 1 (Q2)
             "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q3_d974acce-1bc1-4473-a9f6-d49a256636ab.webm", // Index 2 (Q3)
             "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/4e1a6a7a-3666-4a39-a3ca-9e9b87a5f2de/part1/q4_c3dd3875-fac4-4ad0-96d7-31adf9175c69.webm", // Index 3 (Q4)
@@ -511,10 +511,10 @@
 
 
         // --- BATCH UPLOAD Logic (Store to Array) ---
-        // 🚨 MODIFIED: Added customerAudioUrl argument to store in array
+        // 🚨 MODIFIED: Implemented customerAudioUrl argument to store in array
         window.storeRecording = function(audioBlob, part, qNum, qText, customerAudioUrl = 'N/A') {
             allRecordings.push({ audioBlob, part, qNum, qText, customerAudioUrl });
-            console.log(`✅ Recording saved locally: P${part}-Q${qNum}. Total recordings: ${allRecordings.length}`);
+            console.log(`✅ Recording saved locally: P${part}-Q${qNum}. Customer Audio URL: ${customerAudioUrl}. Total recordings: ${allRecordings.length}`);
             
             const statusElement = (part === 1) ? window.s1StatusElement : 
                                   (part === 15) ? window.pitchStatusElement : 
@@ -542,7 +542,7 @@
             let successfulUploads = 0;
 
             for (let i = 0; i < totalRecordings; i++) {
-                // 🚨 MODIFIED: Retrieve customerAudioUrl
+                // 🚨 MODIFIED: Retrieve customerAudioUrl from allRecordings
                 const { audioBlob, part, qNum, qText, customerAudioUrl } = allRecordings[i];
                 const currentProgress = Math.floor(((i + 1) / totalRecordings) * 100);
 
@@ -591,7 +591,7 @@
                                 duration_seconds: audioBlob.size > 0 ? (audioBlob.size / 100000) : 0,
                                 // 🚨 CRUCIAL ADDITION: User Group & Customer Audio URL
                                 user_group: group,
-                                customer_audio_url: customerAudioUrl
+                                customer_audio_url: customerAudioUrl // <<-- **นี่คือการบันทึก URL ไฟล์เสียงลูกค้า**
                             }
                         ]);
                     if (insertError) { throw insertError; }
@@ -623,11 +623,12 @@
             let statusElement, buttonElement, nextAutoAction, originalButtonText;
             let part, qNum, qText, chunks = [];
             
-            // 🚨 MODIFIED: Capture Customer URL state
+            // 🚨 MODIFIED: Capture Customer URL state based on section logic
             let currentCustomerUrl = lastCustomerAudioUrl; 
             if (type === 3) currentCustomerUrl = 'S3 Closing Script (No Customer Audio)';
             if (type === 8) currentCustomerUrl = 'S1.5 Pitch (No Customer Audio)';
             if (type === 1) currentCustomerUrl = (turn > 0) ? lastCustomerAudioUrl : 'S1 Initial Greeting (No Customer Audio)'; 
+            if (type === 6) currentCustomerUrl = 'S5 Registration (Customer Reply URL will be saved after play)'; 
             
             // *** MAPPING LOGIC FOR UPLOAD METADATA ***
             if (type === 1) { 
@@ -671,6 +672,7 @@
                 buttonElement = window.answerHBtn; 
                 nextAutoAction = window.playFixedHealthQuestion; 
                 originalButtonText = '🎙️ 1. บันทึกคำถามสุขภาพ';
+                currentCustomerUrl = 'S4 Health Q' + (currentHIndex + 1) + ' (Main Script)'; // No audio response before this script
             } 
             else if (type === 7) { 
                 part = 4; 
@@ -678,6 +680,7 @@
                 qNum = baseNum * 10 + followUpStep; 
                 qText = `S4: ซักประวัติ ${H_DISEASE_DATA[0].name} Q${baseNum}.F${followUpStep}: ${H_FOLLOW_UP_NAMES[followUpStep - 1]}`;
                 statusElement = window.hStatusElement;
+                // ต้องสร้างปุ่ม FollowUpQBtn
                 buttonElement = window.followUpQBtn; 
                 nextAutoAction = window.playFixedFollowUpQuestion; 
                 originalButtonText = `🎙️ บันทึกคำถามซักประวัติ Q${followUpStep}`;
@@ -690,6 +693,7 @@
                 buttonElement = window.answerABtn; 
                 nextAutoAction = window.playCustomerReplyAndSetupNextStep; 
                 originalButtonText = `🎙️ บันทึกคำถามลงทะเบียนขั้นตอน ${aRound}`;
+                currentCustomerUrl = 'S5 Registration Step ' + aRound + ' (Main Script)'; // No audio response before this script
             }
             else { 
                 console.error("Unknown recording type:", type);
@@ -715,7 +719,7 @@
                     mediaRecorder.onstop = () => {
                         const audioBlob = new Blob(chunks, { type: 'audio/webm' });
                         if (audioBlob.size > 0) {
-                            // 🚨 MODIFIED: Passing currentCustomerUrl to storeRecording
+                            // 🚨 CRUCIAL: Passing currentCustomerUrl to storeRecording
                             window.storeRecording(audioBlob, part, qNum, qText, currentCustomerUrl);
                         } else {
                             console.warn("Recording stopped with 0 size data. Not saving.");
@@ -1206,7 +1210,8 @@ ${isFinalCustomerTurn ? 'กรุณากดปุ่ม "จบบทที�
             window.answerABtn.textContent = `🎙️ บันทึกคำถามลงทะเบียนขั้นตอน ${aRound}`;
 
             const currentStepName = registrationStepNames[aRound - 1];
-            lastCustomerAudioUrl = 'S5 Registration Script (No Customer Audio)'; // Manually set before start of S5
+            // 🚨 CRITICAL: Set initial lastCustomerAudioUrl here for the first action (Customer URL will be determined and updated after the *next* recording in playCustomerReplyAndSetupNextStep)
+            lastCustomerAudioUrl = 'S5 Registration Step ' + aRound + ' (Employee Script)';
             window.aStatusElement.textContent = `✅ ช่วงที่ 4 เสร็จสิ้น! 🎤 พร้อมบันทึกคำถามลงทะเบียนขั้นตอนที่ ${aRound}: ${currentStepName}`;
             alert(`จบบทที่ 4 แล้ว! เริ่มช่วงที่ 5: ลงทะเบียนลูกค้า (${maxA} ขั้นตอน)`);
         }
@@ -1238,7 +1243,7 @@ ${isFinalCustomerTurn ? 'กรุณากดปุ่ม "จบบทที�
             }
             
             audioEl.onended = () => {
-                // 🚨 CRUCIAL: Update lastCustomerAudioUrl here
+                // 🚨 CRUCIAL: Update lastCustomerAudioUrl here, this is the response for the PREVIOUS step's question
                 lastCustomerAudioUrl = selectedFile;
                 if (aRound >= maxA) {
                     window.aStatusElement.textContent = `🎉 เสร็จสิ้นแบบทดสอบทั้งหมด! รวม ${allRecordings.length} ไฟล์รอการอัปโหลด. กรุณากด '💾 บันทึกการทดสอบเสร็จสิ้น'`;
@@ -1257,6 +1262,9 @@ ${isFinalCustomerTurn ? 'กรุณากดปุ่ม "จบบทที�
                 window.aStatusElement.textContent = `🎤 พร้อมบันทึกคำถามลงทะเบียนขั้นตอนที่ ${aRound}: ${nextStepName}`;
                 window.answerABtn.textContent = `🎙️ บันทึกคำถามลงทะเบียนขั้นตอน ${aRound}`;
                 window.answerABtn.disabled = false;
+                
+                // 🚨 CRITICAL: Set lastCustomerAudioUrl for the next recording (which is an employee script, so it has no customer audio before it)
+                lastCustomerAudioUrl = selectedFile; // Keep the last played URL for the next recording's context
             }; 
         }
 
