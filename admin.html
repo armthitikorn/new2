@@ -351,37 +351,37 @@
             configData = cData;
 
             // 2.1 S1 - ใช้ .filter('product_type', 'cs', arrayFilter)
-            statusElement.textContent = `กำลังดึง S1...`; 
+            statusElement.textContent = `กำลังดึง S1...`; // 🚨 FIX: ใช้ statusElement แทน window.loadingText
             const { data: s1Data, error: s1Error } = await supabase.from('customer_replies_s1')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // 🚨 FIX: ใช้ .filter() + 'cs'
                 .order('turn_index', { ascending: true });
             if (s1Error) throw s1Error;
             s1FilesData = s1Data;
             
             // 2.2 S2 - ใช้ .filter()
-            statusElement.textContent = `กำลังดึง S2...`;
+            statusElement.textContent = `กำลังดึง S2...`; // 🚨 FIX: ใช้ statusElement แทน window.loadingText
             const { data: s2Data, error: s2Error } = await supabase.from('questions_s2')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // 🚨 FIX: ใช้ .filter() + 'cs'
                 .order('q_index', { ascending: true });
             if (s2Error) throw s2Error;
             s2QuestionsData = s2Data;
 
             // 2.3 S3 - ใช้ .filter()
-            statusElement.textContent = `กำลังดึง S3...`;
+            statusElement.textContent = `กำลังดึง S3...`; // 🚨 FIX: ใช้ statusElement แทน window.loadingText
             const { data: s3Data, error: s3Error } = await supabase.from('objections_s3')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // 🚨 FIX: ใช้ .filter() + 'cs'
                 .order('ob_index', { ascending: true });
             if (s3Error) throw s3Error;
             s3ObjectionsData = s3Data;
             
             // 2.4 S4 - Health Questions - ใช้ .filter()
-            statusElement.textContent = `กำลังดึง S4 Questions...`;
+            statusElement.textContent = `กำลังดึง S4 Questions...`; // 🚨 FIX: ใช้ statusElement แทน window.loadingText
             const { data: qData, error: qError } = await supabase.from('health_questions_s4')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // 🚨 FIX: ใช้ .filter() + 'cs'
                 .order('q_index', { ascending: true });
             if (qError) throw qError;
             healthQuestionsData = qData;
@@ -394,33 +394,33 @@
                           null;
             
             // 2.5 S4 - Follow Up Names - ใช้ .filter()
-            statusElement.textContent = `กำลังดึง S4 Follow Up Names...`;
+            statusElement.textContent = `กำลังดึง S4 Follow Up Names...`; // 🚨 FIX: ใช้ statusElement แทน window.loadingText
             const { data: fuData, error: fuError } = await supabase.from('s4_follow_up_names')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // 🚨 FIX: ใช้ .filter() + 'cs'
                 .order('step_index', { ascending: true });
             if (fuError) throw fuError;
             followUpNamesData = fuData;
             
             // 2.6 S4 - Follow Up Replies - ใช้ .filter()
-            statusElement.textContent = `กำลังดึง S4 Follow Up Replies...`;
+            statusElement.textContent = `กำลังดึง S4 Follow Up Replies...`; // 🚨 FIX: ใช้ statusElement แทน window.loadingText
             const { data: furData, error: furError } = await supabase.from('s4_follow_up_replies')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // 🚨 FIX: ใช้ .filter() + 'cs'
                 .order('step_index', { ascending: true });
             if (furError) throw furError;
             followUpRepliesData = furData;
 
             // 2.7 S5 - ใช้ .filter()
-            statusElement.textContent = `กำลังดึง S5...`;
+            statusElement.textContent = `กำลังดึง S5...`; // 🚨 FIX: ใช้ statusElement แทน window.loadingText
             const { data: s5Data, error: s5Error } = await supabase.from('scripts_s5')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // 🚨 FIX: ใช้ .filter() + 'cs'
                 .order('step_index', { ascending: true });
             if (s5Error) throw s5Error;
             s5StepsData = s5Data;
 
-            // 🚨 FIX: เรียกสร้าง HTML และแสดงผล Tab แรก
+            // 🚨 CRITICAL FIX 3: เรียกสร้าง HTML และแสดงผล Tab แรก
             renderUI();
             switchTab('config'); 
             
@@ -436,15 +436,17 @@
 
     // --- 3. ฟังก์ชันสร้าง UI สำหรับแต่ละ Section ---
     const createAudioUploaderHTML = (id, table, column, index_col, index_val, product) => {
-        const currentProduct = Array.isArray(product) 
-            ? (product.find(p => p === currentEditingProduct) || (product.includes('all') ? 'all' : product[0]))
-            : product;
-        
+        // หา Product ID ที่เหมาะสมในการสร้าง path (ใช้ currentEditingProduct ถ้าตรงกับที่ item มี หรือใช้ item[0] ถ้าเป็น Array)
+        const productArray = Array.isArray(product) ? product : [product];
+        const productForPath = productArray.includes(currentEditingProduct) 
+            ? currentEditingProduct 
+            : productArray.includes('all') ? 'all' : productArray[0];
+
         return `
             <div class="upload-area">
                 <label for="${id}_file_input">อัปโหลดไฟล์เสียงใหม่ (.webm/MP3):</label>
                 <input type="file" id="${id}_file_input" accept="audio/*">
-                <button onclick="uploadAudio('${id}_file_input', '${table}', '${column}', '${index_col}', '${index_val}', '${id}_status', '${currentProduct}')">⬆️ อัปโหลดและอัปเดต URL</button>
+                <button onclick="uploadAudio('${id}_file_input', '${table}', '${column}', '${index_col}', '${index_val}', '${id}_status', '${productForPath}')">⬆️ อัปโหลดและอัปเดต URL</button>
                 <p class="loading-text" id="${id}_status"></p>
             </div>
         `;
@@ -644,10 +646,6 @@
     
     // --- 4. ฟังก์ชันบันทึกข้อความ (UPDATE TEXT) ---
 
-    // Utility เพื่อกรองข้อมูลที่ถูกโหลดมาให้ตรงกับ Product ID ปัจจุบัน
-    // 🚨 FIX: ใช้ definition ที่ประกาศไว้แล้วด้านบน ไม่ต้องประกาศซ้ำ
-    // const filterDataForUpdate = (data) => { ... }; 
-
     // ********* CONFIG *********
     window.updateConfig = async () => {
         statusElement.textContent = 'กำลังบันทึกการตั้งค่ารอบ...';
@@ -743,6 +741,7 @@
     
     // --- 5. ฟังก์ชันอัปโหลดไฟล์เสียงและอัปเดต URL (UPDATE AUDIO URL) ---
     
+    // ฟังก์ชันหลักสำหรับอัปโหลดและอัปเดต URL ในตารางใดๆ
     window.uploadAudio = async (fileInputId, table, column, index_col, index_val, statusId, product) => {
         const fileInput = document.getElementById(fileInputId);
         const uploadStatus = document.getElementById(statusId);
@@ -756,16 +755,18 @@
         const fileExtension = file.name.split('.').pop();
         const sectionPrefix = table.split('_')[1] || 'generic';
         
-        const productForPath = Array.isArray(product) 
-            ? (product.find(p => p === currentEditingProduct) || (product.includes('all') ? 'all' : product[0]))
-            : product;
+        // หา Product ID ที่เหมาะสมในการสร้าง path
+        const productArray = Array.isArray(product) ? product : [product];
+        const productForPath = productArray.includes(currentEditingProduct) 
+            ? currentEditingProduct 
+            : productArray.includes('all') ? 'all' : productArray[0];
             
         const path = `customer_audio/${productForPath}/${sectionPrefix}_${index_val}_${uuidv4()}.${fileExtension}`; 
 
         try {
             // 5.1 Upload file to Supabase Storage
             const { error: uploadError } = await supabase.storage
-                .from('responses') 
+                .from('responses') // ใช้ bucket 'responses' ที่คุณตั้งไว้
                 .upload(path, file, { upsert: true });
             if (uploadError) throw uploadError;
 
@@ -786,12 +787,13 @@
             uploadStatus.className = 'success-text';
             uploadStatus.textContent = '✅ อัปโหลดและอัปเดต URL สำเร็จ!';
             
+            // 5.4 Reload data and UI
             await fetchAllData();
 
         } catch (err) {
             console.error('Upload or Update error:', err);
             uploadStatus.className = 'error-text';
-            uploadStatus.textContent = `❌ ข้อผิดพลาด: ${err.message}. โปรดตรวจสอบ Bucket name และ RLS policies.`;
+            uploadStatus.textContent = `❌ ข้อผิดพลาด: ${err.message}. โปรดตรวจสอบ Bucket name และ RLS policies (ต้องมี policy INSERT/UPDATE/SELECT/DELETE สำหรับ anon).`;
         }
     };
     
@@ -802,22 +804,29 @@
              document.getElementById('uploadStatus').textContent = 'ไม่พบรายการ Yes Trigger ที่กำหนดไว้สำหรับผลิตภัณฑ์นี้ในฐานข้อมูล';
              return;
         }
-        const productForPath = Array.isArray(yesTriggerQ.product_type) 
-            ? (yesTriggerQ.product_type.find(p => p === currentEditingProduct) || (yesTriggerQ.product_type.includes('all') ? 'all' : yesTriggerQ.product_type[0]))
-            : yesTriggerQ.product_type;
         
+        // หา Product ID ที่เหมาะสมในการสร้าง path
+        const productArray = Array.isArray(yesTriggerQ.product_type) ? yesTriggerQ.product_type : [yesTriggerQ.product_type];
+        const productForPath = productArray.includes(currentEditingProduct) 
+            ? currentEditingProduct 
+            : productArray.includes('all') ? 'all' : productArray[0];
+
+        // เรียกใช้ฟังก์ชันหลัก: uploadAudio(fileInputId, table, column, index_col, index_val, statusId, product)
         await window.uploadAudio('yesTriggerFileInput', 'health_questions_s4', 'yes_trigger_url', 'id', yesTriggerQ.id, 'uploadStatus', productForPath);
     };
 
     // --- Initialize ---
     document.addEventListener('DOMContentLoaded', () => {
+        // อ่าน Product ID จาก Local Storage ที่ถูกบันทึกไว้ใน index.html ล่าสุด
         const selectedProduct = localStorage.getItem('roleplaySelectedProduct') || 'health'; 
         
+        // กำหนดค่า Product Selector ให้ตรงกับที่เลือกครั้งล่าสุด (ถ้ามี)
         const selector = document.getElementById('productSelector');
         if (Array.from(selector.options).map(o => o.value).includes(selectedProduct)) {
             selector.value = selectedProduct;
             currentEditingProduct = selectedProduct;
         } else {
+             // ถ้าไม่พบ ให้ใช้ค่า default (health)
              currentEditingProduct = selector.value;
         }
         
