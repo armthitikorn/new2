@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>E-Simulator Roleplay (ประกันสุขภาพ - FINAL WORKING CODE)</title>
+    <title>E-Simulator Roleplay (ประกันสุขภาพ - Database Driven)</title>
     
     <style>
         /* 1. สไตล์ที่ถูกปรับขนาด (NEW) */
@@ -256,10 +256,12 @@
         import { v4 as uuidv4 } from 'https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/esm-browser/index.js';
 
         // --- 1. Supabase Config & Global State ---
-        // ** ต้องแน่ใจว่า Supabase URL และ Key ถูกต้อง **
         const supabaseUrl = 'https://wzwyotzzxycqfwercakh.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno'; 
         window.supabase = createClient(supabaseUrl, supabaseKey);
+
+        // 🚨 NEW: Product Identifier
+        const CURRENT_PRODUCT_ID = 'Health'; // กำหนดให้ index1 เป็น "Health"
 
         // State Variables
         let mediaRecorder = null;
@@ -300,19 +302,12 @@
         let globalS4FollowUpReplies = [];
         let globalS5Steps = [];
         
-        // Fixed S4 Audio (ต้องจัดการใน Admin เพื่อให้ยืดหยุ่น)
+        // Fixed S4 Audio (URL ที่ดึงมาตอน init)
         const NO_ANSWER_URL = "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q3/health5_P1_P1Q3_1762340907852.webm"; 
-        
-        // --- Hardcoded Data ที่ยังต้องใช้โครงสร้างเดิมเพื่อทำงาน ---
-        const H_FOLLOW_UP_NAMES_HARDCODE = [
-            "1. เป็นมานานเท่าไหร่", "2. ลักษณะอาการเป็นอย่างไร",
-            "3. วิธีการรักษาของแพทย์", "4. ตรวจครั้งล่าสุดเมื่อไหร่",
-            "5. ผลตรวจเป็นอย่างไร"
-        ];
         
         // --- Utility Functions ---
         let audioCache = {};
-        let selectedRandomFiles = []; // S1 turn files based on difficulty
+        let selectedRandomFiles = []; 
         
         // E. ฟังก์ชันดึงข้อมูลทั้งหมดจาก Supabase (NEW)
         const fetchInitialData = async function() {
@@ -320,7 +315,7 @@
             window.loadingText.textContent = `กำลังดึงข้อมูลการตั้งค่าจากฐานข้อมูล...`;
 
             try {
-                // 1. ดึง Configuration (difficulty_config)
+                // 1. ดึง Configuration (difficulty_config) - ไม่ต้องกรอง Product Type
                 const { data: configData, error: configError } = await window.supabase
                     .from('difficulty_config')
                     .select('*');
@@ -337,6 +332,7 @@
                 const { data: s1Data, error: s1Error } = await window.supabase
                     .from('customer_replies_s1')
                     .select('turn_index, audio_url, is_finale')
+                    .eq('product_type', CURRENT_PRODUCT_ID) // <--- FILTER S1
                     .order('turn_index', { ascending: true });
                 if (s1Error) throw s1Error;
                 globalS1Files = s1Data;
@@ -346,6 +342,7 @@
                 const { data: s2Data, error: s2Error } = await window.supabase
                     .from('questions_s2')
                     .select('q_index, audio_url')
+                    .eq('product_type', CURRENT_PRODUCT_ID) // <--- FILTER S2
                     .order('q_index', { ascending: true });
                 if (s2Error) throw s2Error;
                 globalS2Files = s2Data;
@@ -355,6 +352,7 @@
                 const { data: s3Data, error: s3Error } = await window.supabase
                     .from('objections_s3')
                     .select('ob_index, audio_url')
+                    .eq('product_type', CURRENT_PRODUCT_ID) // <--- FILTER S3
                     .order('ob_index', { ascending: true });
                 if (s3Error) throw s3Error;
                 globalS3Files = s3Data;
@@ -363,18 +361,22 @@
                 window.loadingText.textContent = `กำลังดึงข้อมูลคำถามสุขภาพ S4...`;
                 const { data: s4Data, error: s4Error } = await window.supabase
                     .from('health_questions_s4')
-                    .select('q_index, q_text, is_yes_trigger, yes_trigger_url') // สมมติว่าเพิ่ม yes_trigger_url ในตาราง health_questions_s4
+                    .select('q_index, q_text, is_yes_trigger, yes_trigger_url, disease_name') 
+                    .eq('product_type', CURRENT_PRODUCT_ID) // <--- FILTER S4
                     .order('q_index', { ascending: true });
                 if (s4Error) throw s4Error;
                 
                 globalS4Questions = s4Data.map(q => q.q_text);
-                selectedDisease = s4Data.find(q => q.is_yes_trigger) || {};
+                // Find the specific question that triggers follow-up
+                selectedDisease = s4Data.find(q => q.is_yes_trigger) || {name: 'โรคสำคัญ', yes_trigger_url: NO_ANSWER_URL};
+                selectedDisease.name = selectedDisease.disease_name || selectedDisease.name; // Use disease_name from table if available
                 
                 // 6. ดึง S4 Follow-up Names
                 window.loadingText.textContent = `กำลังดึงข้อมูลชื่อคำถามซักประวัติ S4...`;
                  const { data: s4FNamesData, error: s4FNamesError } = await window.supabase
                     .from('s4_follow_up_names')
                     .select('step_index, step_name')
+                    .eq('product_type', CURRENT_PRODUCT_ID) // <--- FILTER S4 NAMES
                     .order('step_index', { ascending: true });
                 if (s4FNamesError) throw s4FNamesError;
                 globalS4FollowUpNames = s4FNamesData;
@@ -384,6 +386,7 @@
                  const { data: s4FRepliesData, error: s4FRepliesError } = await window.supabase
                     .from('s4_follow_up_replies')
                     .select('step_index, customer_audio_url')
+                    .eq('product_type', CURRENT_PRODUCT_ID) // <--- FILTER S4 REPLIES
                     .order('step_index', { ascending: true });
                 if (s4FRepliesError) throw s4FRepliesError;
                 globalS4FollowUpReplies = s4FRepliesData;
@@ -393,6 +396,7 @@
                 const { data: s5Data, error: s5Error } = await window.supabase
                     .from('scripts_s5')
                     .select('step_index, step_name, customer_audio_url')
+                    .eq('product_type', CURRENT_PRODUCT_ID) // <--- FILTER S5
                     .order('step_index', { ascending: true });
                 if (s5Error) throw s5Error;
                 globalS5Steps = s5Data;
@@ -407,7 +411,7 @@
                 
             } catch (error) {
                 console.error("Failed to fetch initial data:", error);
-                window.loadingText.textContent = `❌ ข้อผิดพลาดในการโหลดข้อมูล: ${error.message}. โปรดตรวจสอบ Supabase Tables`;
+                window.loadingText.textContent = `❌ ข้อผิดพลาดในการโหลดข้อมูล: ${error.message}. โปรดตรวจสอบ Supabase Tables และ RLS Policies`;
                 window.startTestBtn.disabled = true;
                 setTimeout(() => { window.loadingOverlay.style.display = "none"; }, 3000);
                 return false;
@@ -441,7 +445,6 @@
             console.log("Preloading started. The test can proceed.");
         }
 
-        // F. ปรับปรุง prepareTurnFiles ให้ใช้ globalS1Files (NEW)
         const prepareTurnFiles = function() {
             const selectedDifficulty = document.querySelector('input[name="difficulty"]:checked').value;
             const maxTurns = globalConfig[selectedDifficulty]?.S1 || 5; 
@@ -475,19 +478,20 @@
             return null;
         }
         
-        // G. ปรับปรุง updateHealthQuestionUI ให้ใช้ globalS4Questions และ globalS4FollowUpNames (NEW)
         const updateHealthQuestionUI = function() {
             const healthQuestionDisplay = document.getElementById('healthQuestionDisplay');
+            
             if (isFollowUpMode) {
-                const currentFName = globalS4FollowUpNames.find(f => f.step_index === followUpStep)?.step_name || H_FOLLOW_UP_NAMES_HARDCODE[followUpStep - 1];
+                const currentFName = globalS4FollowUpNames.find(f => f.step_index === followUpStep)?.step_name || `Q${followUpStep} (ไม่ได้ตั้งชื่อ)`;
 
                 window.hQName.textContent = `ซักประวัติ Q${followUpStep}/${maxFollowUp}: ${currentFName}`;
                 healthQuestionDisplay.innerHTML = `
                     <p><strong>คำถามซักประวัติที่ต้องถาม:</strong> ${currentFName}</p>
                 `;
             } else if (currentHIndex < maxH) {
-                const currentQText = globalS4Questions[currentHIndex];
-                window.hQName.textContent = `คำถามที่ ${currentHIndex + 1}/${maxH}: ${currentQText.split('(')[0].trim()}`;
+                const currentQText = globalS4Questions[currentHIndex] || 'คำถามสุขภาพ (ไม่พบในฐานข้อมูล)';
+                // แสดงชื่อย่อคำถามที่ H_QName แต่แสดงข้อความเต็มที่ HealthQuestionDisplay
+                window.hQName.textContent = `คำถามที่ ${currentHIndex + 1}/${maxH}: ${currentQText.split(':')[0].split('(')[0].trim()}`; 
                 healthQuestionDisplay.innerHTML = `
                     <p>คำถามหลัก: <strong>${currentQText}</strong></p>
                 `;
@@ -496,8 +500,7 @@
                 healthQuestionDisplay.innerHTML = `<p>✅ เสร็จสิ้นการซักประวัติแล้ว</p>`;
             }
         }
-        
-        // H. ปรับปรุง renderRegistrationSteps ให้ใช้ globalS5Steps (NEW)
+
         const renderRegistrationSteps = function() {
             window.stepList.innerHTML = ''; 
             globalS5Steps.forEach((step, index) => {
@@ -507,7 +510,6 @@
                 window.stepList.appendChild(li);
             });
         }
-
         const updateStepHighlight = function(currentStep) {
             document.querySelectorAll('#stepList li').forEach(li => {
                 li.style.fontWeight = 'normal';
@@ -611,7 +613,7 @@
                                 duration_seconds: audioBlob.size > 0 ? (audioBlob.size / 100000) : 0,
                                 user_group: group,
                                 customer_audio_url: customerAudioUrl,
-                                insurance_type: 'Health' 
+                                insurance_type: CURRENT_PRODUCT_ID // ใช้ Product ID ที่กำหนดไว้
                             }
                         ]);
                     if (insertError) { throw insertError; }
@@ -651,6 +653,10 @@
             if (type === 7) currentCustomerUrl = lastCustomerAudioUrl; 
             if (type === 6) currentCustomerUrl = 'S5 Registration Step ' + aRound + ' (Employee Script)';
 
+            const currentQTextS4 = globalS4Questions[currentHIndex] || 'คำถามสุขภาพ';
+            const currentFNameS4 = globalS4FollowUpNames.find(f => f.step_index === followUpStep)?.step_name || 'คำถามซักประวัติ';
+            const currentStepNameS5 = globalS5Steps.find(s => s.step_index === aRound)?.step_name || 'ขั้นตอนลงทะเบียน';
+
             if (type === 1) { 
                 part = 1; qNum = turn + 1; qText = `S1: เปิดตัว/โต้ตอบต้นสาย T${qNum}`;
                 statusElement = window.s1StatusElement; 
@@ -686,34 +692,27 @@
                 nextAutoAction = startNextCloseRoundAuto; 
                 originalButtonText = '🎙️ 2. บันทึกเสียงตอบข้อโต้แย้ง';
             }
-            // H. ปรับปรุง S4 ให้ใช้ globalS4Questions (NEW)
             else if (type === 5) { 
-                part = 4; qNum = currentHIndex + 1; qText = `S4: คำถามสุขภาพหลัก Q${currentHIndex + 1}: ${globalS4Questions[currentHIndex]}`;
+                part = 4; qNum = currentHIndex + 1; qText = `S4: คำถามสุขภาพหลัก Q${currentHIndex + 1}: ${currentQTextS4}`;
                 statusElement = window.hStatusElement;
                 buttonElement = window.answerHBtn; 
                 nextAutoAction = playFixedHealthQuestion; 
                 originalButtonText = '🎙️ 1. บันทึกคำถามสุขภาพ';
             } 
-            // H. ปรับปรุง S4 Follow-up ให้ใช้ globalS4FollowUpNames (NEW)
             else if (type === 7) { 
-                const currentFName = globalS4FollowUpNames.find(f => f.step_index === followUpStep)?.step_name || H_FOLLOW_UP_NAMES_HARDCODE[followUpStep - 1];
-                
                 part = 4; 
                 const baseNum = currentHIndex + 1; 
                 qNum = baseNum * 10 + followUpStep; 
-                qText = `S4: ซักประวัติ ${selectedDisease.disease_name || 'โรคสำคัญ'} Q${baseNum}.F${followUpStep}: ${currentFName}`;
+                qText = `S4: ซักประวัติ ${selectedDisease.disease_name || 'โรคสำคัญ'} Q${baseNum}.F${followUpStep}: ${currentFNameS4}`;
                 statusElement = window.hStatusElement;
                 buttonElement = window.followUpQBtn; 
                 nextAutoAction = playFixedFollowUpQuestion; 
                 originalButtonText = `🎙️ บันทึกคำถามซักประวัติ Q${followUpStep}`;
             } 
-            // H. ปรับปรุง S5 ให้ใช้ globalS5Steps (NEW)
             else if (type === 6) { 
-                const currentStepName = globalS5Steps.find(s => s.step_index === aRound)?.step_name || 'ขั้นตอนลงทะเบียน';
-                
                 part = 5; 
                 qNum = aRound; 
-                qText = `S5: ลงทะเบียนลูกค้า ขั้นตอน ${aRound}: ${currentStepName}`;
+                qText = `S5: ลงทะเบียนลูกค้า ขั้นตอน ${aRound}: ${currentStepNameS5}`;
                 statusElement = window.aStatusElement;
                 buttonElement = window.answerABtn; 
                 nextAutoAction = playCustomerReplyAndSetupNextStep; 
@@ -788,7 +787,7 @@
             }
         }
         
-        // --- Section 1 Functions (ใช้ selectedRandomFiles ที่สร้างจาก globalS1Files) ---
+        // --- Section 1 Functions (Flexible Sequential Finale with Safety Net) ---
         const endTurn = function() {
             if (turn < maxTurns) { 
                 
@@ -796,7 +795,7 @@
                 window.turnSpan.textContent = turn; 
                 
                 const fileToPlay = selectedRandomFiles[turn - 1]; 
-                const isFinalCustomerTurn = (turn === maxTurns);
+                const isFinalCustomerTurn = (turn === maxTurns); 
                 
                 window.s1StatusElement.textContent = `⏳ กำลังโหลดเสียงลูกค้า...`;
                 const audioEl = getCachedAudioElement(fileToPlay, true);
@@ -1063,9 +1062,6 @@ ${isFinalCustomerTurn ? 'กรุณากดปุ่ม "จบบทที�
             isFollowUpMode = false;
             followUpStep = 0;
             
-            // ใช้ข้อมูล selectedDisease ที่ถูกดึงมา
-            // (selectedDisease จะมี yes_trigger_url และ disease_name)
-            
             updateHealthQuestionUI(); 
             window.answerHBtn.disabled = false;
             
@@ -1105,7 +1101,7 @@ ${isFinalCustomerTurn ? 'กรุณากดปุ่ม "จบบทที�
                     audioEl.onended = null;
                     return;
                 });
-                const replyText = isYes ? `ใช่ (โรค: ${selectedDisease.disease_name || 'โรคสำคัญ'})` : `ไม่เคยค่ะ/ครับ`;
+                const replyText = isYes ? `ใช่ (โรค: ${selectedDisease.name || 'โรคสำคัญ'})` : `ไม่เคยค่ะ/ครับ`;
                 window.hStatusElement.textContent = `🔊 กำลังเล่นคำตอบลูกค้า: "${replyText}"...`;
             };
             
@@ -1447,7 +1443,6 @@ ${isFinalCustomerTurn ? 'กรุณากดปุ่ม "จบบทที�
             lastCustomerAudioUrl = 'N/A';
         }
 
-        // O. ปรับปรุง startTest ให้ใช้ globalConfig (NEW)
         const startTest = function() {
             const userName = window.inputUserName.value.trim();
             const userGroup = window.inputUserGroup.value;
@@ -1489,7 +1484,8 @@ ${isFinalCustomerTurn ? 'กรุณากดปุ่ม "จบบทที�
 
             lastCustomerAudioUrl = 'S1 Initial Greeting (No Customer Audio)';
 
-            prepareTurnFiles(); // ใช้ globalS1Files ภายใน
+            preloadCriticalAudio();
+            prepareTurnFiles(); 
             window.recordBtn.disabled = false;
             window.s1StatusElement.textContent = `🎤 พร้อมบันทึกบทพูดเปิดตัว (เทิร์นที่ 1/${maxTurns})`;
         }
