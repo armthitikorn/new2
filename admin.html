@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>Admin Panel: จัดการเนื้อหาแบบทดสอบ</title>
     <style>
-        /* [สไตล์เดิม] */
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
         body { 
             font-family: 'Sarabun', sans-serif;
@@ -34,6 +33,7 @@
             border-radius: 6px;
             background-color: #e9ecef;
         }
+        /* --- Navigation Tabs --- */
         .tab-menu {
             display: flex;
             flex-wrap: wrap;
@@ -63,6 +63,8 @@
         .tab-content {
             padding-top: 20px;
         }
+        
+        /* --- Section Styles --- */
         h2 { color: #333; margin-top: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         h3 { color: #555; margin-top: 10px; font-size: 1.1em;}
         .data-section {
@@ -128,6 +130,7 @@
             border-radius: 4px;
             flex-basis: 100%;
         }
+        /* --- Responsive Grid for Config/Audio --- */
         .config-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -138,9 +141,13 @@
             border: 1px solid #eee;
             border-radius: 4px;
         }
+        
+        /* Status Text */
         .loading-text { color: orange; font-weight: bold; }
         .success-text { color: green; font-weight: bold; }
         .error-text { color: red; font-weight: bold; }
+
+        /* Media Queries for Mobile/Tablet */
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -271,7 +278,7 @@
         's3': '3. โต้แย้ง (S3)', 's4': '4. สุขภาพ (S4)', 's5': '5. ลงทะเบียน (S5)'
     };
     
-    // --- Utility Function to Check Array Containment ---
+    // --- Utility Function to Check Array Containment (Defined Once) ---
     const filterDataForUpdate = (data) => {
         return data.filter(item => {
             const pt = item.product_type;
@@ -327,7 +334,6 @@
             button.onclick = () => switchTab(section);
             tabMenu.appendChild(button);
         });
-        // ไม่ต้องเรียก switchTab('config') ที่นี่ แต่จะเรียกใน fetchAllData แทน
     };
 
     // --- 2. ฟังก์ชันดึงข้อมูลทั้งหมด (READ) - ใช้ .filter('product_type', 'cs', arrayFilter) ---
@@ -337,7 +343,6 @@
 
         try {
             // 🚨 CRITICAL FIX 1: สร้างตัวกรอง Array Contains
-            // Format: {product_id, all}
             const arrayFilter = `{${currentEditingProduct}, all}`; 
 
             // 2.0 Config - ไม่ต้องกรอง Product Type
@@ -349,7 +354,7 @@
             statusElement.textContent = `กำลังดึง S1...`; 
             const { data: s1Data, error: s1Error } = await supabase.from('customer_replies_s1')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('turn_index', { ascending: true });
             if (s1Error) throw s1Error;
             s1FilesData = s1Data;
@@ -358,7 +363,7 @@
             statusElement.textContent = `กำลังดึง S2...`;
             const { data: s2Data, error: s2Error } = await supabase.from('questions_s2')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('q_index', { ascending: true });
             if (s2Error) throw s2Error;
             s2QuestionsData = s2Data;
@@ -367,7 +372,7 @@
             statusElement.textContent = `กำลังดึง S3...`;
             const { data: s3Data, error: s3Error } = await supabase.from('objections_s3')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('ob_index', { ascending: true });
             if (s3Error) throw s3Error;
             s3ObjectionsData = s3Data;
@@ -376,7 +381,7 @@
             statusElement.textContent = `กำลังดึง S4 Questions...`;
             const { data: qData, error: qError } = await supabase.from('health_questions_s4')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('q_index', { ascending: true });
             if (qError) throw qError;
             healthQuestionsData = qData;
@@ -392,7 +397,7 @@
             statusElement.textContent = `กำลังดึง S4 Follow Up Names...`;
             const { data: fuData, error: fuError } = await supabase.from('s4_follow_up_names')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('step_index', { ascending: true });
             if (fuError) throw fuError;
             followUpNamesData = fuData;
@@ -401,7 +406,7 @@
             statusElement.textContent = `กำลังดึง S4 Follow Up Replies...`;
             const { data: furData, error: furError } = await supabase.from('s4_follow_up_replies')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('step_index', { ascending: true });
             if (furError) throw furError;
             followUpRepliesData = furData;
@@ -410,7 +415,7 @@
             statusElement.textContent = `กำลังดึง S5...`;
             const { data: s5Data, error: s5Error } = await supabase.from('scripts_s5')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('step_index', { ascending: true });
             if (s5Error) throw s5Error;
             s5StepsData = s5Data;
@@ -635,20 +640,13 @@
 
     const renderUI = () => {
         renderTabMenu(); 
-        // ไม่ต้องเรียก render functions ที่นี่ เพราะจะเรียกเมื่อ switchTab ครั้งแรก
     };
     
     // --- 4. ฟังก์ชันบันทึกข้อความ (UPDATE TEXT) ---
 
     // Utility เพื่อกรองข้อมูลที่ถูกโหลดมาให้ตรงกับ Product ID ปัจจุบัน
-    const filterDataForUpdate = (data) => {
-        return data.filter(item => {
-            const pt = item.product_type;
-            const current = currentEditingProduct;
-            return (Array.isArray(pt) ? pt.includes(current) : pt === current) || 
-                   (Array.isArray(pt) ? pt.includes('all') : pt === 'all');
-        });
-    };
+    // 🚨 FIX: ใช้ definition ที่ประกาศไว้แล้วด้านบน ไม่ต้องประกาศซ้ำ
+    // const filterDataForUpdate = (data) => { ... }; 
 
     // ********* CONFIG *********
     window.updateConfig = async () => {
