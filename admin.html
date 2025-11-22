@@ -219,7 +219,7 @@
             <button onclick="updateHealthQuestions()" class="save-button">💾 บันทึกการแก้ไขคำถามหลักทั้งหมด</button>
             
             <h3>4.2 ไฟล์เสียงลูกค้าตอบ "ใช่" (Q4 Yes Trigger)</h3>
-            <p>URL เสียงลูกค้าที่ตอบ "ใช่" เมื่อเจอกลุ่มโรคสำคัญ (Q4) ซึ่งจะกระตุ้นการซักประวัติ:</p>
+            <p>URL เสียงลูกค้าที่ตอบ "ใช่" เมื่อเจอกลุ่มโรคสำคัญ (Q4) ซึ่งจะกระตุ้นการซักประวัติ (ใช้สำหรับผลิตภัณฑ์ที่เลือกปัจจุบันเท่านั้น):</p>
             <div class="item-row">
                 <label>URL ปัจจุบัน:</label>
                 <div class="audio-url-display" id="yesTriggerUrlDisplay"></div>
@@ -260,7 +260,7 @@
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Global Data Stores
-    let currentEditingProduct = document.getElementById('productSelector').value; // 'health' or 'life'
+    let currentEditingProduct = document.getElementById('productSelector').value; // 'health' or 'life1' or 'all'
     let configData = [];
     let s1FilesData = [];
     let s2QuestionsData = [];
@@ -278,9 +278,6 @@
         's3': '3. โต้แย้ง (S3)', 's4': '4. สุขภาพ (S4)', 's5': '5. ลงทะเบียน (S5)'
     };
     
-    // Fixed S4 Audio (Fallback) - ควรย้ายเข้าตาราง config ถ้าใช้ร่วมกัน
-    const NO_ANSWER_URL = "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q3/health5_P1_P1Q3_1762340907852.webm"; 
-
     // --- Tab Management ---
     const switchTab = (tabName) => {
         tabSections.forEach(section => {
@@ -318,54 +315,85 @@
         switchTab('config'); 
     };
 
-    // --- 2. ฟังก์ชันดึงข้อมูลทั้งหมด (READ) ---
+    // --- 2. ฟังก์ชันดึงข้อมูลทั้งหมด (READ) - ใช้ .cs() ---
     const fetchAllData = async () => {
         statusElement.textContent = `กำลังโหลดข้อมูลสำหรับผลิตภัณฑ์: ${currentEditingProduct.toUpperCase()}...`;
         statusElement.className = 'loading-text';
 
         try {
-            // สร้างตัวกรองร่วม: ดึงข้อมูลที่ตรงกับ Product ID ปัจจุบัน หรือที่มีค่าเป็น 'all' (ตัวเล็ก)
-            const orFilter = `product_type.eq.${currentEditingProduct},product_type.eq.all`;
+            // 🚨 CRITICAL FIX: สร้างตัวกรอง Array Contains
+            // Format: {product_id, all}
+            const arrayFilter = `{${currentEditingProduct}, all}`; 
 
             // 2.0 Config - ไม่ต้องกรอง Product Type
             const { data: cData, error: cError } = await supabase.from('difficulty_config').select('*');
             if (cError) throw cError;
             configData = cData;
 
-            // 2.1 S1
-            const { data: s1Data, error: s1Error } = await supabase.from('customer_replies_s1').select('*').or(orFilter).order('turn_index', { ascending: true });
+            // 2.1 S1 - ใช้ .cs()
+            window.loadingText.textContent = `กำลังดึง S1...`;
+            const { data: s1Data, error: s1Error } = await supabase.from('customer_replies_s1')
+                .select('*')
+                .cs('product_type', arrayFilter) // <--- FIXED: ใช้ .cs()
+                .order('turn_index', { ascending: true });
             if (s1Error) throw s1Error;
             s1FilesData = s1Data;
             
-            // 2.2 S2
-            const { data: s2Data, error: s2Error } = await supabase.from('questions_s2').select('*').or(orFilter).order('q_index', { ascending: true });
+            // 2.2 S2 - ใช้ .cs()
+            window.loadingText.textContent = `กำลังดึง S2...`;
+            const { data: s2Data, error: s2Error } = await supabase.from('questions_s2')
+                .select('*')
+                .cs('product_type', arrayFilter) // <--- FIXED: ใช้ .cs()
+                .order('q_index', { ascending: true });
             if (s2Error) throw s2Error;
             s2QuestionsData = s2Data;
 
-            // 2.3 S3
-            const { data: s3Data, error: s3Error } = await supabase.from('objections_s3').select('*').or(orFilter).order('ob_index', { ascending: true });
+            // 2.3 S3 - ใช้ .cs()
+            window.loadingText.textContent = `กำลังดึง S3...`;
+            const { data: s3Data, error: s3Error } = await supabase.from('objections_s3')
+                .select('*')
+                .cs('product_type', arrayFilter) // <--- FIXED: ใช้ .cs()
+                .order('ob_index', { ascending: true });
             if (s3Error) throw s3Error;
             s3ObjectionsData = s3Data;
             
-            // 2.4 S4 - Health Questions
-            const { data: qData, error: qError } = await supabase.from('health_questions_s4').select('*').or(orFilter).order('q_index', { ascending: true });
+            // 2.4 S4 - Health Questions - ใช้ .cs()
+            window.loadingText.textContent = `กำลังดึง S4 Questions...`;
+            const { data: qData, error: qError } = await supabase.from('health_questions_s4')
+                .select('*')
+                .cs('product_type', arrayFilter) // <--- FIXED: ใช้ .cs()
+                .order('q_index', { ascending: true });
             if (qError) throw qError;
             healthQuestionsData = qData;
-            // กรองหา Q4 Yes Trigger ที่ตรงกับ Product ID ที่เลือก (ถ้ามี) หรือใช้ตัวที่ถูกดึงมา
-            yesTriggerQ = qData.find(q => q.is_yes_trigger && q.product_type === currentEditingProduct) || qData.find(q => q.is_yes_trigger && q.product_type === 'all') || null;
+            // กรองหา Q4 Yes Trigger ที่ตรงกับ Product ID ที่เลือก
+            yesTriggerQ = qData.find(q => q.is_yes_trigger && q.product_type.includes(currentEditingProduct)) || 
+                          qData.find(q => q.is_yes_trigger && q.product_type.includes('all')) || 
+                          null;
             
-            // 2.5 S4 - Follow Up Names
-            const { data: fuData, error: fuError } = await supabase.from('s4_follow_up_names').select('*').or(orFilter).order('step_index', { ascending: true });
+            // 2.5 S4 - Follow Up Names - ใช้ .cs()
+            window.loadingText.textContent = `กำลังดึง S4 Follow Up Names...`;
+            const { data: fuData, error: fuError } = await supabase.from('s4_follow_up_names')
+                .select('*')
+                .cs('product_type', arrayFilter) // <--- FIXED: ใช้ .cs()
+                .order('step_index', { ascending: true });
             if (fuError) throw fuError;
             followUpNamesData = fuData;
             
-            // 2.6 S4 - Follow Up Replies
-            const { data: furData, error: furError } = await supabase.from('s4_follow_up_replies').select('*').or(orFilter).order('step_index', { ascending: true });
+            // 2.6 S4 - Follow Up Replies - ใช้ .cs()
+            window.loadingText.textContent = `กำลังดึง S4 Follow Up Replies...`;
+            const { data: furData, error: furError } = await supabase.from('s4_follow_up_replies')
+                .select('*')
+                .cs('product_type', arrayFilter) // <--- FIXED: ใช้ .cs()
+                .order('step_index', { ascending: true });
             if (furError) throw furError;
             followUpRepliesData = furData;
 
-            // 2.7 S5
-            const { data: s5Data, error: s5Error } = await supabase.from('scripts_s5').select('*').or(orFilter).order('step_index', { ascending: true });
+            // 2.7 S5 - ใช้ .cs()
+            window.loadingText.textContent = `กำลังดึง S5...`;
+            const { data: s5Data, error: s5Error } = await supabase.from('scripts_s5')
+                .select('*')
+                .cs('product_type', arrayFilter) // <--- FIXED: ใช้ .cs()
+                .order('step_index', { ascending: true });
             if (s5Error) throw s5Error;
             s5StepsData = s5Data;
 
@@ -376,7 +404,7 @@
         } catch (err) {
             console.error('Fetch error:', err);
             statusElement.className = 'error-text';
-            statusElement.textContent = `❌ ข้อผิดพลาดในการโหลดข้อมูล: ${err.message}. โปรดตรวจสอบ RLS และ Column Names.`;
+            statusElement.textContent = `❌ ข้อผิดพลาดในการโหลดข้อมูล: ${err.message}. โปรดตรวจสอบว่าคุณได้เปลี่ยนคอลัมน์ product_type เป็น TEXT[] และ RLS (Policy) ของตารางอนุญาตให้ดึงข้อมูลด้วยตัวกรอง Array Contains (.cs) ได้`;
         }
     };
 
@@ -415,16 +443,18 @@
         const list = document.getElementById('s1List');
         list.innerHTML = '';
         s1FilesData.forEach(f => {
+            // product_type จะมาในรูปแบบ Array string เช่น '{"health", "all"}'
+            const displayProduct = Array.isArray(f.product_type) ? f.product_type.map(p => p.toUpperCase()).join(', ') : f.product_type;
             const isFinale = f.is_finale ? ' (FINALE)' : '';
             const uploadId = `s1_upload_${f.id}`;
             list.innerHTML += `
                 <div class="item-row" data-id="${f.id}">
-                    <strong>Turn ${f.turn_index}${isFinale} [${f.product_type.toUpperCase()}]:</strong>
+                    <strong>Turn ${f.turn_index}${isFinale} [${displayProduct}]:</strong>
                     <div class="audio-control">
                         <div class="audio-url-display">${f.audio_url}</div>
                         <audio src="${f.audio_url}" controls></audio>
                     </div>
-                    ${createAudioUploaderHTML(uploadId, 'customer_replies_s1', 'audio_url', 'id', f.id, f.product_type)}
+                    ${createAudioUploaderHTML(uploadId, 'customer_replies_s1', 'audio_url', 'id', f.id, f.product_type.includes(currentEditingProduct) ? currentEditingProduct : f.product_type[0])}
                 </div>
             `;
         });
@@ -434,17 +464,18 @@
         const list = document.getElementById('s2List');
         list.innerHTML = '';
         s2QuestionsData.forEach(q => {
+            const displayProduct = Array.isArray(q.product_type) ? q.product_type.map(p => p.toUpperCase()).join(', ') : q.product_type;
             const uploadId = `s2_upload_${q.id}`;
             list.innerHTML += `
                 <div class="item-row" data-id="${q.id}">
-                    <strong>Q${q.q_index} [${q.product_type.toUpperCase()}]</strong>
+                    <strong>Q${q.q_index} [${displayProduct}]</strong>
                     <label>ข้อความคำถาม:</label>
                     <textarea id="s2_text_${q.id}" rows="2">${q.q_text || ''}</textarea>
                     <div class="audio-control">
                         <div class="audio-url-display">${q.audio_url}</div>
                         <audio src="${q.audio_url}" controls></audio>
                     </div>
-                    ${createAudioUploaderHTML(uploadId, 'questions_s2', 'audio_url', 'id', q.id, q.product_type)}
+                    ${createAudioUploaderHTML(uploadId, 'questions_s2', 'audio_url', 'id', q.id, q.product_type.includes(currentEditingProduct) ? currentEditingProduct : q.product_type[0])}
                 </div>
             `;
         });
@@ -455,36 +486,34 @@
         const list = document.getElementById('s3List');
         list.innerHTML = '';
         s3ObjectionsData.forEach(o => {
+            const displayProduct = Array.isArray(o.product_type) ? o.product_type.map(p => p.toUpperCase()).join(', ') : o.product_type;
             const uploadId = `s3_upload_${o.id}`;
             list.innerHTML += `
                 <div class="item-row" data-id="${o.id}">
-                    <strong>Objection ${o.ob_index} [${o.product_type.toUpperCase()}]</strong>
+                    <strong>Objection ${o.ob_index} [${displayProduct}]</strong>
                     <label>ข้อความโต้แย้ง:</label>
                     <textarea id="s3_text_${o.id}" rows="2">${o.ob_text || ''}</textarea>
                     <div class="audio-control">
                         <div class="audio-url-display">${o.audio_url}</div>
                         <audio src="${o.audio_url}" controls></audio>
                     </div>
-                    ${createAudioUploaderHTML(uploadId, 'objections_s3', 'audio_url', 'id', o.id, o.product_type)}
+                    ${createAudioUploaderHTML(uploadId, 'objections_s3', 'audio_url', 'id', o.id, o.product_type.includes(currentEditingProduct) ? currentEditingProduct : o.product_type[0])}
                 </div>
             `;
         });
         list.innerHTML += `<button onclick="updateS3Text()" class="save-button">💾 บันทึกการแก้ไขข้อความโต้แย้ง S3</button>`;
     };
     
-    // 🚨 FUNCTION ที่ขาดหายไป: RENDER S4
     const renderS4 = () => {
         // 4.1 Health Questions (Q4List)
         const q4List = document.getElementById('q4List');
         q4List.innerHTML = '';
         healthQuestionsData.forEach(q => {
-            // กรองเฉพาะ Q ที่ตรงกับ Product ที่เลือก หรือเป็น All
-            if (q.product_type !== currentEditingProduct && q.product_type !== 'all') return;
-            
+            const displayProduct = Array.isArray(q.product_type) ? q.product_type.map(p => p.toUpperCase()).join(', ') : q.product_type;
             const isTrigger = q.is_yes_trigger ? ' (TRIGGER Q)' : '';
             q4List.innerHTML += `
                 <div class="item-row" data-id="${q.id}">
-                    <strong>Q${q.q_index} [${q.product_type.toUpperCase()}]${isTrigger}</strong>
+                    <strong>Q${q.q_index} [${displayProduct}]${isTrigger}</strong>
                     <label>ข้อความคำถาม:</label>
                     <textarea id="q4_text_${q.id}" rows="2">${q.q_text || ''}</textarea>
                 </div>
@@ -508,12 +537,10 @@
         const fuNamesList = document.getElementById('fuNamesList');
         fuNamesList.innerHTML = '';
         followUpNamesData.forEach(f => {
-             // กรองเฉพาะ Q ที่ตรงกับ Product ที่เลือก หรือเป็น All
-            if (f.product_type !== currentEditingProduct && f.product_type !== 'all') return;
-
+            const displayProduct = Array.isArray(f.product_type) ? f.product_type.map(p => p.toUpperCase()).join(', ') : f.product_type;
             fuNamesList.innerHTML += `
                 <div class="item-row" data-id="${f.id}">
-                    <strong>Follow-up Step ${f.step_index} [${f.product_type.toUpperCase()}]:</strong>
+                    <strong>Follow-up Step ${f.step_index} [${displayProduct}]:</strong>
                     <label>ชื่อคำถามซักประวัติ:</label>
                     <input type="text" id="fu_name_${f.id}" value="${f.step_name || ''}">
                 </div>
@@ -526,18 +553,16 @@
         const list = document.getElementById('fuRepliesList');
         list.innerHTML = '';
         followUpRepliesData.forEach(r => {
-             // กรองเฉพาะ Q ที่ตรงกับ Product ที่เลือก หรือเป็น All
-            if (r.product_type !== currentEditingProduct && r.product_type !== 'all') return;
-            
+            const displayProduct = Array.isArray(r.product_type) ? r.product_type.map(p => p.toUpperCase()).join(', ') : r.product_type;
             const uploadId = `fu_reply_upload_${r.id}`;
             list.innerHTML += `
                 <div class="item-row" data-id="${r.id}">
-                    <strong>F${r.step_index} [${r.product_type.toUpperCase()}]: (${r.disease_name || 'โรคสำคัญ'})</strong>
+                    <strong>F${r.step_index} [${displayProduct}]: (${r.disease_name || 'โรคสำคัญ'})</strong>
                     <div class="audio-control">
                         <div class="audio-url-display">${r.customer_audio_url}</div>
                         <audio src="${r.customer_audio_url}" controls></audio>
                     </div>
-                    ${createAudioUploaderHTML(uploadId, 's4_follow_up_replies', 'customer_audio_url', 'id', r.id, r.product_type)}
+                    ${createAudioUploaderHTML(uploadId, 's4_follow_up_replies', 'customer_audio_url', 'id', r.id, r.product_type.includes(currentEditingProduct) ? currentEditingProduct : r.product_type[0])}
                 </div>
             `;
         });
@@ -547,20 +572,18 @@
         const list = document.getElementById('s5List');
         list.innerHTML = '';
         s5StepsData.forEach(s => {
-             // กรองเฉพาะ Q ที่ตรงกับ Product ที่เลือก หรือเป็น All
-            if (s.product_type !== currentEditingProduct && s.product_type !== 'all') return;
-            
+            const displayProduct = Array.isArray(s.product_type) ? s.product_type.map(p => p.toUpperCase()).join(', ') : s.product_type;
             const uploadId = `s5_upload_${s.id}`;
             list.innerHTML += `
                 <div class="item-row" data-id="${s.id}">
-                    <strong>Step ${s.step_index} [${s.product_type.toUpperCase()}]</strong>
+                    <strong>Step ${s.step_index} [${displayProduct}]</strong>
                     <label>ชื่อขั้นตอน/สคริปต์:</label>
                     <textarea id="s5_name_${s.id}" rows="2">${s.step_name}</textarea>
                     <div class="audio-control">
                         <div class="audio-url-display">${s.customer_audio_url}</div>
                         <audio src="${s.customer_audio_url}" controls></audio>
                     </div>
-                    ${createAudioUploaderHTML(uploadId, 'scripts_s5', 'customer_audio_url', 'id', s.id, s.product_type)}
+                    ${createAudioUploaderHTML(uploadId, 'scripts_s5', 'customer_audio_url', 'id', s.id, s.product_type.includes(currentEditingProduct) ? currentEditingProduct : s.product_type[0])}
                 </div>
             `;
         });
@@ -573,7 +596,7 @@
         renderS1();
         renderS2();
         renderS3();
-        renderS4(); // <--- ตอนนี้ฟังก์ชันถูกนิยามแล้ว
+        renderS4(); 
         renderFUReplies(); 
         renderS5();
     };
@@ -607,7 +630,8 @@
     window.updateS2Text = async () => {
         statusElement.textContent = 'กำลังบันทึกข้อความคำถาม S2...';
         statusElement.className = 'loading-text';
-        for (const q of s2QuestionsData.filter(q => q.product_type === currentEditingProduct || q.product_type === 'all')) {
+        // ใช้วิธีวนลูปผ่านข้อมูลที่โหลดมาแล้ว และตรวจสอบว่า Product ID ปัจจุบันอยู่ใน Array
+        for (const q of s2QuestionsData.filter(q => q.product_type.includes(currentEditingProduct) || q.product_type.includes('all'))) {
             const newText = document.getElementById(`s2_text_${q.id}`).value.trim();
             if (newText !== q.q_text) {
                 const { error } = await supabase.from('questions_s2').update({ q_text: newText }).eq('id', q.id);
@@ -621,7 +645,7 @@
     window.updateS3Text = async () => {
         statusElement.textContent = 'กำลังบันทึกข้อความโต้แย้ง S3...';
         statusElement.className = 'loading-text';
-        for (const o of s3ObjectionsData.filter(o => o.product_type === currentEditingProduct || o.product_type === 'all')) {
+        for (const o of s3ObjectionsData.filter(o => o.product_type.includes(currentEditingProduct) || o.product_type.includes('all'))) {
             const newText = document.getElementById(`s3_text_${o.id}`).value.trim();
             if (newText !== o.ob_text) {
                 const { error } = await supabase.from('objections_s3').update({ ob_text: newText }).eq('id', o.id);
@@ -635,7 +659,7 @@
     window.updateHealthQuestions = async () => { 
         statusElement.textContent = 'กำลังบันทึกคำถามหลัก...';
         statusElement.className = 'loading-text';
-        for (const q of healthQuestionsData.filter(q => q.product_type === currentEditingProduct || q.product_type === 'all')) {
+        for (const q of healthQuestionsData.filter(q => q.product_type.includes(currentEditingProduct) || q.product_type.includes('all'))) {
             const newText = document.getElementById(`q4_text_${q.id}`).value.trim();
             if (newText !== q.q_text) {
                 const { error } = await supabase.from('health_questions_s4').update({ q_text: newText }).eq('id', q.id);
@@ -649,7 +673,7 @@
     window.updateFollowUpNames = async () => { 
         statusElement.textContent = 'กำลังบันทึกชื่อคำถามซักประวัติ...';
         statusElement.className = 'loading-text';
-        for (const q of followUpNamesData.filter(q => q.product_type === currentEditingProduct || q.product_type === 'all')) {
+        for (const q of followUpNamesData.filter(q => q.product_type.includes(currentEditingProduct) || q.product_type.includes('all'))) {
             const newName = document.getElementById(`fu_name_${q.id}`).value.trim();
             if (newName !== q.step_name) {
                 const { error } = await supabase.from('s4_follow_up_names').update({ step_name: newName }).eq('id', q.id);
@@ -663,7 +687,7 @@
     window.updateS5Names = async () => { 
         statusElement.textContent = 'กำลังบันทึกชื่อขั้นตอนลงทะเบียน...';
         statusElement.className = 'loading-text';
-        for (const s of s5StepsData.filter(s => s.product_type === currentEditingProduct || s.product_type === 'all')) {
+        for (const s of s5StepsData.filter(s => s.product_type.includes(currentEditingProduct) || s.product_type.includes('all'))) {
             const newName = document.getElementById(`s5_name_${s.id}`).value.trim();
             if (newName !== s.step_name) {
                 const { error } = await supabase.from('scripts_s5').update({ step_name: newName }).eq('id', s.id);
@@ -733,15 +757,23 @@
              return;
         }
         // เรียกใช้ฟังก์ชันหลัก: uploadAudio(fileInputId, table, column, index_col, index_val, statusId, product)
-        await window.uploadAudio('yesTriggerFileInput', 'health_questions_s4', 'yes_trigger_url', 'id', yesTriggerQ.id, 'uploadStatus', yesTriggerQ.product_type);
+        await window.uploadAudio('yesTriggerFileInput', 'health_questions_s4', 'yes_trigger_url', 'id', yesTriggerQ.id, 'uploadStatus', yesTriggerQ.product_type.includes(currentEditingProduct) ? currentEditingProduct : yesTriggerQ.product_type[0]);
     };
 
     // --- Initialize ---
     document.addEventListener('DOMContentLoaded', () => {
-        // 🚨 FIX: อ่าน Product ID จาก Local Storage ที่ถูกบันทึกไว้ใน index.html ล่าสุด
+        // อ่าน Product ID จาก Local Storage ที่ถูกบันทึกไว้ใน index.html ล่าสุด
         const selectedProduct = localStorage.getItem('roleplaySelectedProduct') || 'health'; 
-        document.getElementById('productSelector').value = selectedProduct;
-        currentEditingProduct = selectedProduct;
+        
+        // กำหนดค่า Product Selector ให้ตรงกับที่เลือกครั้งล่าสุด (ถ้ามี)
+        const selector = document.getElementById('productSelector');
+        if (Array.from(selector.options).map(o => o.value).includes(selectedProduct)) {
+            selector.value = selectedProduct;
+            currentEditingProduct = selectedProduct;
+        } else {
+             // ถ้าไม่พบ ให้ใช้ค่า default (health)
+             currentEditingProduct = selector.value;
+        }
         
         renderTabMenu();
         fetchAllData();
