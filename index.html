@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>หน้าลงทะเบียนและเลือกแบบทดสอบ</title>
     <style>
+        /* [สไตล์เดิม] */
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
         body {
-            font-family: 'Sarabun', sans-serif;
+            font-family: 'Sarabun', sans-serif; /* เปลี่ยนเป็น Sarabun เพื่อความสม่ำเสมอ */
             margin: 0;
             padding: 40px;
             background-color: #f0f4f8;
@@ -48,7 +49,7 @@
             font-size: 16px;
         }
         select {
-            appearance: none;
+            appearance: none; 
             background-color: #f9f9f9;
         }
         button {
@@ -83,23 +84,28 @@
     <div id="registrationForm">
         
         <div class="form-group">
-            <label for="fullName">ชื่อ-นามสกุล/รหัสพนักงาน:</label>
-            <input type="text" id="fullName" placeholder="กรอกชื่อของคุณ" required>
+            <label for="fullName">ชื่อ-นามสกุล:</label>
+            <input type="text" id="fullName" placeholder="กรอกชื่อ-นามสกุล" required>
         </div>
         
         <div class="form-group">
-            <label for="department">กลุ่มผู้เข้าฝึกอบรม (TSRs/Nursery/ฯลฯ):</label>
-            <input type="text" id="department" placeholder="กรอกชื่อกลุ่ม" required>
+            <label for="employeeEmail">อีเมล:</label>
+            <input type="email" id="employeeEmail" placeholder="กรอกอีเมล" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="department">กลุ่มผู้เข้าฝึกอบรม:</label>
+            <input type="text" id="department" placeholder="กรอกชื่อแผนก" required>
         </div>
 
         <div class="form-group">
             <label for="testType">เลือกประเภทแบบทดสอบ:</label>
             <select id="testType" required>
                 <option value="">-- กรุณาเลือก --</option>
-                <option value="health">ประกันสุขภาพ (Health)</option>
-                <option value="life1">ประกันชีวิต 1 (Saving)</option>
-                <option value="life2">ประกันชีวิต 2</option>
-                <option value="retirement">บำนาญ (Retirement)</option>
+                <option value="health">Health (ประกันสุขภาพ)</option>
+                <option value="life1">Saving (ประกันชีวิต 1)</option> 
+                <option value="life2">Retire (ประกันชีวิต 2)</option>
+                <option value="retirement">Retirement (บำนาญ)</option> 
             </select>
         </div>
         
@@ -112,45 +118,39 @@
 </div>
 
 <script>
-    // ฟังก์ชันนำทางไปยังหน้า Admin
     document.getElementById('adminBtn').addEventListener('click', function() {
         window.location.href = 'admin.html';
     });
 
-    // ฟังก์ชันเริ่มทำแบบทดสอบ
     document.getElementById('startSelectionBtn').addEventListener('click', function() {
         const fullName = document.getElementById('fullName').value.trim();
+        const employeeEmail = document.getElementById('employeeEmail').value.trim();
         const department = document.getElementById('department').value.trim();
         const testType = document.getElementById('testType').value;
 
         // ตรวจสอบความถูกต้องของข้อมูล (Validation)
-        if (!fullName || !department || testType === "") {
-            alert("กรุณากรอกชื่อ/รหัสพนักงาน, กลุ่มผู้ฝึกอบรม และเลือกประเภทแบบทดสอบให้ครบถ้วนก่อนเริ่มทำแบบทดสอบ!");
+        if (!fullName || !employeeEmail || !department || testType === "") {
+            alert("กรุณากรอกข้อมูลให้ครบถ้วนก่อนเริ่มทำแบบทดสอบ!");
             return;
         }
         
         // --- การจัดเก็บข้อมูล ---
-        // เก็บข้อมูลพนักงาน
         const userData = {
             fullName: fullName,
+            email: employeeEmail,
             department: department
         };
         localStorage.setItem('roleplayUserData', JSON.stringify(userData));
-        
-        // เก็บ Product ID ที่เลือก
+        // บันทึก Product ID ที่ถูกต้อง
         localStorage.setItem('roleplaySelectedProduct', testType);
 
         // --- ตรรกะการนำทาง ---
-        // (เราจะใช้ index1.html สำหรับ Health และ index3.html สำหรับ Life Products)
         if (testType === 'health') {
-            window.location.href = 'index1.html';
-        } 
-        // 🚨 หมายเหตุ: สำหรับ Life1, Life2, Retirement เราจะใช้โค้ด index3.html ตัวเดียว 
-        // โดยให้ index3.html อ่านค่า Product ID จาก Local Storage 
-        else if (testType.startsWith('life') || testType === 'retirement') {
-            window.location.href = 'index3.html';
+            window.location.href = 'index1.html'; // Health ใช้ index1.html
+        } else if (testType === 'life1' || testType === 'life2' || testType === 'retirement') {
+            window.location.href = 'index3.html'; // Life Group ใช้ index3.html
         } else {
-            alert('ไม่พบการตั้งค่าสำหรับแบบทดสอบที่เลือก');
+             alert('ไม่พบการตั้งค่าสำหรับแบบทดสอบที่เลือก');
         }
     });
 </script>
