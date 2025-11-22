@@ -13,7 +13,7 @@
             color: #333;
         }
         .container {
-            max-width: 900px; 
+            max-width: 1000px; /* ขยายความกว้าง */
             margin: 0 auto; 
             padding: 30px;
             background: white;
@@ -27,7 +27,7 @@
             border-bottom: 2px solid #eee;
             padding-bottom: 15px;
         }
-        h2 { color: #333; margin-top: 25px; }
+        h2 { color: #333; margin-top: 25px; border-bottom: 1px solid #ddd; padding-bottom: 5px;}
         .data-section {
             margin-bottom: 40px;
             padding: 20px;
@@ -47,7 +47,7 @@
             margin-top: 10px;
             font-weight: bold;
         }
-        textarea, input[type="text"] {
+        textarea, input[type="text"], input[type="number"] {
             width: 98%;
             padding: 8px;
             margin-top: 5px;
@@ -100,6 +100,16 @@
             color: red;
             font-weight: bold;
         }
+        .flex-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+        .flex-col {
+            flex: 1;
+            min-width: 300px;
+        }
     </style>
 </head>
 <body>
@@ -108,23 +118,42 @@
     <h1>🔥 Admin Panel: จัดการเนื้อหาแบบทดสอบ</h1>
     <p class="loading-text" id="statusMessage">กำลังโหลดข้อมูลจาก Supabase...</p>
     
+    <div id="configSection" class="data-section" style="display: none;">
+        <h2>0. การตั้งค่าจำนวนรอบ (Difficulty Configuration)</h2>
+        <div id="configList">
+            </div>
+        <button onclick="updateConfig()">💾 บันทึกการตั้งค่ารอบทั้งหมด</button>
+    </div>
+
+    <div id="s1Section" class="data-section" style="display: none;">
+        <h2>1. บทโต้ตอบต้นสาย (S1 - Customer Replies)</h2>
+        <p>จัดการไฟล์เสียงลูกค้าในแต่ละเทิร์น: (รวมถึงไฟล์สุดท้ายที่เป็น FINALE)</p>
+        <div id="s1List">
+            </div>
+    </div>
+    
+    <div class="flex-row">
+        <div id="s2Section" class="data-section flex-col" style="display: none;">
+            <h2>2. คำถามลูกค้า (S2)</h2>
+            <div id="s2List">
+                </div>
+        </div>
+
+        <div id="s3Section" class="data-section flex-col" style="display: none;">
+            <h2>3. ข้อโต้แย้ง (S3)</h2>
+            <div id="s3List">
+                </div>
+        </div>
+    </div>
+
     <div id="healthQuestionsSection" class="data-section" style="display: none;">
-        <h2>1. คำถามสุขภาพหลัก (Section 4 - Q1 ถึง Q5)</h2>
+        <h2>4. คำถามสุขภาพหลัก (S4 - Q1 ถึง Q5)</h2>
         <div id="q4List">
             </div>
         <button onclick="updateHealthQuestions()">💾 บันทึกการแก้ไขคำถามหลักทั้งหมด</button>
-    </div>
-
-    <div id="followUpNamesSection" class="data-section" style="display: none;">
-        <h2>2. คำถามซักประวัติ (S4 Follow-up Names)</h2>
-        <div id="fuNamesList">
-            </div>
-        <button onclick="updateFollowUpNames()">💾 บันทึกการแก้ไขชื่อคำถามซักประวัติ</button>
-    </div>
-
-    <div id="q4TriggerAudioSection" class="data-section" style="display: none;">
-        <h2>3. ไฟล์เสียงลูกค้าตอบ "ใช่" (Q4 Yes Trigger)</h2>
-        <p>นี่คือ URL เสียงลูกค้าที่ตอบ "ใช่" เมื่อเจอกลุ่มโรคสำคัญ (Q4) ซึ่งจะกระตุ้นการซักประวัติ:</p>
+        
+        <h3>4.1 ไฟล์เสียงลูกค้าตอบ "ใช่" (Q4 Yes Trigger)</h3>
+        <p>URL เสียงลูกค้าที่ตอบ "ใช่" เมื่อเจอกลุ่มโรคสำคัญ (Q4) ซึ่งจะกระตุ้นการซักประวัติ:</p>
         <div class="item-row">
             <label>URL ปัจจุบัน:</label>
             <div class="audio-url-display" id="yesTriggerUrlDisplay"></div>
@@ -137,6 +166,23 @@
                 <p class="loading-text" id="uploadStatus"></p>
             </div>
         </div>
+        
+        <h3>4.2 คำถามซักประวัติ (S4 Follow-up Names)</h3>
+        <div id="fuNamesList">
+            </div>
+        <button onclick="updateFollowUpNames()">💾 บันทึกการแก้ไขชื่อคำถามซักประวัติ</button>
+        
+        <h3>4.3 ไฟล์เสียงตอบซักประวัติ (F1 ถึง F5)</h3>
+        <p>จัดการ URL เสียงลูกค้าตอบคำถามซักประวัติแต่ละขั้นตอน:</p>
+        <div id="fuRepliesList">
+            </div>
+    </div>
+    
+    <div id="s5Section" class="data-section" style="display: none;">
+        <h2>5. ขั้นตอนลงทะเบียนลูกค้า (S5)</h2>
+        <div id="s5List">
+            </div>
+        <button onclick="updateS5Names()">💾 บันทึกการแก้ไขชื่อขั้นตอนลงทะเบียน</button>
     </div>
 
 </div>
@@ -150,8 +196,15 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno'; 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Global Data Stores
+    let configData = [];
+    let s1FilesData = [];
+    let s2QuestionsData = [];
+    let s3ObjectionsData = [];
     let healthQuestionsData = [];
     let followUpNamesData = [];
+    let followUpRepliesData = [];
+    let s5StepsData = [];
     let yesTriggerQ = null;
 
     const statusElement = document.getElementById('statusMessage');
@@ -161,22 +214,46 @@
         statusElement.textContent = 'กำลังโหลดข้อมูล...';
 
         try {
-            // 2.1 ดึงคำถามสุขภาพหลัก S4
-            const { data: qData, error: qError } = await supabase
-                .from('health_questions_s4')
-                .select('*')
-                .order('q_index', { ascending: true });
+            // 2.0 Config
+            const { data: cData, error: cError } = await supabase.from('difficulty_config').select('*');
+            if (cError) throw cError;
+            configData = cData;
+
+            // 2.1 S1
+            const { data: s1Data, error: s1Error } = await supabase.from('customer_replies_s1').select('*').order('turn_index', { ascending: true });
+            if (s1Error) throw s1Error;
+            s1FilesData = s1Data;
+            
+            // 2.2 S2
+            const { data: s2Data, error: s2Error } = await supabase.from('questions_s2').select('*').order('q_index', { ascending: true });
+            if (s2Error) throw s2Error;
+            s2QuestionsData = s2Data;
+
+            // 2.3 S3
+            const { data: s3Data, error: s3Error } = await supabase.from('objections_s3').select('*').order('ob_index', { ascending: true });
+            if (s3Error) throw s3Error;
+            s3ObjectionsData = s3Data;
+            
+            // 2.4 S4 - Health Questions
+            const { data: qData, error: qError } = await supabase.from('health_questions_s4').select('*').order('q_index', { ascending: true });
             if (qError) throw qError;
             healthQuestionsData = qData;
             yesTriggerQ = qData.find(q => q.is_yes_trigger) || null;
             
-            // 2.2 ดึงชื่อคำถามซักประวัติ S4
-            const { data: fuData, error: fuError } = await supabase
-                .from('s4_follow_up_names')
-                .select('*')
-                .order('step_index', { ascending: true });
+            // 2.5 S4 - Follow Up Names
+            const { data: fuData, error: fuError } = await supabase.from('s4_follow_up_names').select('*').order('step_index', { ascending: true });
             if (fuError) throw fuError;
             followUpNamesData = fuData;
+            
+            // 2.6 S4 - Follow Up Replies
+            const { data: furData, error: furError } = await supabase.from('s4_follow_up_replies').select('*').order('step_index', { ascending: true });
+            if (furError) throw furError;
+            followUpRepliesData = furData;
+
+            // 2.7 S5
+            const { data: s5Data, error: s5Error } = await supabase.from('scripts_s5').select('*').order('step_index', { ascending: true });
+            if (s5Error) throw s5Error;
+            s5StepsData = s5Data;
 
             renderUI();
             statusElement.className = 'success-text';
@@ -185,27 +262,165 @@
         } catch (err) {
             console.error('Fetch error:', err);
             statusElement.className = 'error-text';
-            statusElement.textContent = `❌ ข้อผิดพลาดในการโหลดข้อมูล: ${err.message}`;
+            statusElement.textContent = `❌ ข้อผิดพลาดในการโหลดข้อมูล: ${err.message}. โปรดตรวจสอบ RLS และ Column Names.`;
         }
     };
 
-    // --- 3. ฟังก์ชันสร้าง UI ---
-    const renderUI = () => {
-        // 3.1 Render คำถามสุขภาพหลัก
-        const q4List = document.getElementById('q4List');
-        q4List.innerHTML = '';
-        healthQuestionsData.forEach(q => {
-            const isTrigger = q.is_yes_trigger ? '(คำถามกระตุ้น)' : '';
-            q4List.innerHTML += `
-                <div class="item-row" data-id="${q.id}">
-                    <strong>Q${q.q_index} ${isTrigger}:</strong>
-                    <textarea id="q4_text_${q.id}" rows="3">${q.q_text}</textarea>
-                    ${q.is_yes_trigger ? `<p style="color:red; margin: 5px 0;">*หากแก้ไขข้อความนี้ อย่าลืมแก้ไขในโค้ดฝั่ง Client ด้วย (สำหรับการแสดงผลย่อ)</p>` : ''}
+    // --- 3. ฟังก์ชันสร้าง UI สำหรับแต่ละ Section ---
+    const createAudioUploaderHTML = (id, table, column, index_col, index_val) => {
+        return `
+            <div class="upload-area">
+                <label for="${id}_file_input">อัปโหลดไฟล์เสียงใหม่ (.webm/MP3):</label>
+                <input type="file" id="${id}_file_input" accept="audio/*">
+                <button onclick="uploadAudio('${id}_file_input', '${table}', '${column}', '${index_col}', '${index_val}', '${id}_status')">⬆️ อัปโหลดและอัปเดต URL</button>
+                <p class="loading-text" id="${id}_status"></p>
+            </div>
+        `;
+    };
+
+    const renderConfig = () => {
+        const list = document.getElementById('configList');
+        list.innerHTML = '';
+        configData.forEach(c => {
+            list.innerHTML += `
+                <div class="item-row" data-id="${c.id}">
+                    <strong>ระดับ: ${c.difficulty_level.toUpperCase()}</strong>
+                    <div class="flex-row" style="gap: 10px;">
+                        <div class="flex-col">S1 (เปิดตัว): <input type="number" id="c_s1_${c.id}" value="${c.max_s1}"></div>
+                        <div class="flex-col">S2 (คำถาม): <input type="number" id="c_s2_${c.id}" value="${c.max_s2}"></div>
+                        <div class="flex-col">S3 (โต้แย้ง): <input type="number" id="c_s3_${c.id}" value="${c.max_s3}"></div>
+                        <div class="flex-col">S4 (สุขภาพ): <input type="number" id="c_s4_${c.id}" value="${c.max_s4}"></div>
+                        <div class="flex-col">S5 (ลงทะเบียน): <input type="number" id="c_s5_${c.id}" value="${c.max_s5}"></div>
+                    </div>
                 </div>
             `;
         });
+        document.getElementById('configSection').style.display = 'block';
+    };
 
-        // 3.2 Render ชื่อคำถามซักประวัติ
+    const renderS1 = () => {
+        const list = document.getElementById('s1List');
+        list.innerHTML = '';
+        s1FilesData.forEach(f => {
+            const isFinale = f.is_finale ? ' (FINALE)' : '';
+            const uploadId = `s1_upload_${f.id}`;
+            list.innerHTML += `
+                <div class="item-row" data-id="${f.id}">
+                    <strong>Turn ${f.turn_index}${isFinale}:</strong>
+                    <div class="audio-control">
+                        <div class="audio-url-display">${f.audio_url}</div>
+                        <audio src="${f.audio_url}" controls></audio>
+                    </div>
+                    ${createAudioUploaderHTML(uploadId, 'customer_replies_s1', 'audio_url', 'id', f.id)}
+                </div>
+            `;
+        });
+        document.getElementById('s1Section').style.display = 'block';
+    };
+
+    const renderS2 = () => {
+        const list = document.getElementById('s2List');
+        list.innerHTML = '';
+        s2QuestionsData.forEach(q => {
+            const uploadId = `s2_upload_${q.id}`;
+            list.innerHTML += `
+                <div class="item-row" data-id="${q.id}">
+                    <strong>Q${q.q_index}</strong>
+                    <label>ข้อความคำถาม:</label>
+                    <textarea id="s2_text_${q.id}" rows="2">${q.q_text || ''}</textarea>
+                    <div class="audio-control">
+                        <div class="audio-url-display">${q.audio_url}</div>
+                        <audio src="${q.audio_url}" controls></audio>
+                    </div>
+                    ${createAudioUploaderHTML(uploadId, 'questions_s2', 'audio_url', 'id', q.id)}
+                </div>
+            `;
+        });
+        document.getElementById('s2Section').style.display = 'block';
+    };
+
+    const renderS3 = () => {
+        const list = document.getElementById('s3List');
+        list.innerHTML = '';
+        s3ObjectionsData.forEach(o => {
+            const uploadId = `s3_upload_${o.id}`;
+            list.innerHTML += `
+                <div class="item-row" data-id="${o.id}">
+                    <strong>Objection ${o.ob_index}</strong>
+                    <label>ข้อความโต้แย้ง:</label>
+                    <textarea id="s3_text_${o.id}" rows="2">${o.ob_text || ''}</textarea>
+                    <div class="audio-control">
+                        <div class="audio-url-display">${o.audio_url}</div>
+                        <audio src="${o.audio_url}" controls></audio>
+                    </div>
+                    ${createAudioUploaderHTML(uploadId, 'objections_s3', 'audio_url', 'id', o.id)}
+                </div>
+            `;
+        });
+        document.getElementById('s3Section').style.display = 'block';
+    };
+    
+    // S4 (Q4 - Yes Trigger Audio) ถูกรวมอยู่ใน renderUI หลัก
+    const renderFUReplies = () => {
+        const list = document.getElementById('fuRepliesList');
+        list.innerHTML = '';
+        followUpRepliesData.forEach(r => {
+            const uploadId = `fu_reply_upload_${r.id}`;
+            list.innerHTML += `
+                <div class="item-row" data-id="${r.id}">
+                    <strong>F${r.step_index}: (${r.disease_name || 'โรคสำคัญ'})</strong>
+                    <div class="audio-control">
+                        <div class="audio-url-display">${r.customer_audio_url}</div>
+                        <audio src="${r.customer_audio_url}" controls></audio>
+                    </div>
+                    ${createAudioUploaderHTML(uploadId, 's4_follow_up_replies', 'customer_audio_url', 'id', r.id)}
+                </div>
+            `;
+        });
+    };
+
+    const renderS5 = () => {
+        const list = document.getElementById('s5List');
+        list.innerHTML = '';
+        s5StepsData.forEach(s => {
+            const uploadId = `s5_upload_${s.id}`;
+            list.innerHTML += `
+                <div class="item-row" data-id="${s.id}">
+                    <strong>Step ${s.step_index}</strong>
+                    <label>ชื่อขั้นตอน/สคริปต์:</label>
+                    <textarea id="s5_name_${s.id}" rows="2">${s.step_name}</textarea>
+                    <div class="audio-control">
+                        <div class="audio-url-display">${s.customer_audio_url}</div>
+                        <audio src="${s.customer_audio_url}" controls></audio>
+                    </div>
+                    ${createAudioUploaderHTML(uploadId, 'scripts_s5', 'customer_audio_url', 'id', s.id)}
+                </div>
+            `;
+        });
+        document.getElementById('s5Section').style.display = 'block';
+    };
+
+    const renderUI = () => {
+        // Render All Sections
+        renderConfig();
+        renderS1();
+        renderS2();
+        renderS3();
+        renderFUReplies(); // 4.3
+        renderS5();
+        
+        // 4.0/4.1/4.2 (Health Qs & Follow-up Names) (โค้ดเดิม)
+        const q4List = document.getElementById('q4List');
+        q4List.innerHTML = '';
+        healthQuestionsData.forEach(q => {
+            const isTrigger = q.is_yes_trigger ? ' (คำถามกระตุ้น)' : '';
+            q4List.innerHTML += `
+                <div class="item-row" data-id="${q.id}">
+                    <strong>Q${q.q_index}${isTrigger}:</strong>
+                    <textarea id="q4_text_${q.id}" rows="3">${q.q_text}</textarea>
+                </div>
+            `;
+        });
         const fuNamesList = document.getElementById('fuNamesList');
         fuNamesList.innerHTML = '';
         followUpNamesData.forEach(q => {
@@ -216,8 +431,6 @@
                 </div>
             `;
         });
-        
-        // 3.3 Render Yes Trigger Audio URL
         const yesTriggerUrlDisplay = document.getElementById('yesTriggerUrlDisplay');
         const yesTriggerAudio = document.getElementById('yesTriggerAudio');
         if (yesTriggerQ) {
@@ -229,93 +442,106 @@
         }
 
         document.getElementById('healthQuestionsSection').style.display = 'block';
-        document.getElementById('followUpNamesSection').style.display = 'block';
-        document.getElementById('q4TriggerAudioSection').style.display = 'block';
     };
 
     // --- 4. ฟังก์ชันบันทึกข้อความ (UPDATE TEXT) ---
-    window.updateHealthQuestions = async () => {
+
+    window.updateConfig = async () => {
+        statusElement.textContent = 'กำลังบันทึกการตั้งค่ารอบ...';
+        statusElement.className = 'loading-text';
+        
+        for (const c of configData) {
+            const updates = {
+                max_s1: parseInt(document.getElementById(`c_s1_${c.id}`).value),
+                max_s2: parseInt(document.getElementById(`c_s2_${c.id}`).value),
+                max_s3: parseInt(document.getElementById(`c_s3_${c.id}`).value),
+                max_s4: parseInt(document.getElementById(`c_s4_${c.id}`).value),
+                max_s5: parseInt(document.getElementById(`c_s5_${c.id}`).value),
+            };
+            const { error } = await supabase.from('difficulty_config').update(updates).eq('id', c.id);
+            if (error) {
+                statusElement.className = 'error-text';
+                statusElement.textContent = `❌ บันทึก Config ${c.difficulty_level} ล้มเหลว: ${error.message}`;
+                return;
+            }
+        }
+        await fetchAllData();
+    };
+
+    window.updateHealthQuestions = async () => { /* Logic for S4 Q text */
         statusElement.textContent = 'กำลังบันทึกคำถามหลัก...';
         statusElement.className = 'loading-text';
-
         for (const q of healthQuestionsData) {
             const newText = document.getElementById(`q4_text_${q.id}`).value.trim();
             if (newText !== q.q_text) {
-                const { error } = await supabase
-                    .from('health_questions_s4')
-                    .update({ q_text: newText })
-                    .eq('id', q.id);
-                if (error) {
-                    statusElement.className = 'error-text';
-                    statusElement.textContent = `❌ บันทึก Q${q.q_index} ล้มเหลว: ${error.message}`;
-                    return;
-                }
+                const { error } = await supabase.from('health_questions_s4').update({ q_text: newText }).eq('id', q.id);
+                if (error) { statusElement.className = 'error-text'; statusElement.textContent = `❌ บันทึก Q${q.q_index} ล้มเหลว: ${error.message}`; return; }
             }
         }
-        await fetchAllData(); // รีโหลดข้อมูลเพื่อยืนยันการบันทึก
+        await fetchAllData();
     };
-
-    window.updateFollowUpNames = async () => {
+    
+    window.updateFollowUpNames = async () => { /* Logic for S4 Follow-up Names */
         statusElement.textContent = 'กำลังบันทึกชื่อคำถามซักประวัติ...';
         statusElement.className = 'loading-text';
-
         for (const q of followUpNamesData) {
             const newName = document.getElementById(`fu_name_${q.id}`).value.trim();
             if (newName !== q.step_name) {
-                const { error } = await supabase
-                    .from('s4_follow_up_names')
-                    .update({ step_name: newName })
-                    .eq('id', q.id);
-                if (error) {
-                    statusElement.className = 'error-text';
-                    statusElement.textContent = `❌ บันทึก Step ${q.step_index} ล้มเหลว: ${error.message}`;
-                    return;
-                }
+                const { error } = await supabase.from('s4_follow_up_names').update({ step_name: newName }).eq('id', q.id);
+                if (error) { statusElement.className = 'error-text'; statusElement.textContent = `❌ บันทึก Step ${q.step_index} ล้มเหลว: ${error.message}`; return; }
             }
         }
         await fetchAllData(); 
     };
-
+    
+    window.updateS5Names = async () => { /* Logic for S5 Step Names */
+        statusElement.textContent = 'กำลังบันทึกชื่อขั้นตอนลงทะเบียน...';
+        statusElement.className = 'loading-text';
+        for (const s of s5StepsData) {
+            const newName = document.getElementById(`s5_name_${s.id}`).value.trim();
+            if (newName !== s.step_name) {
+                const { error } = await supabase.from('scripts_s5').update({ step_name: newName }).eq('id', s.id);
+                if (error) { statusElement.className = 'error-text'; statusElement.textContent = `❌ บันทึก Step ${s.step_index} ล้มเหลว: ${error.message}`; return; }
+            }
+        }
+        await fetchAllData();
+    };
+    
     // --- 5. ฟังก์ชันอัปโหลดไฟล์เสียงและอัปเดต URL (UPDATE AUDIO URL) ---
-    window.uploadYesTriggerAudio = async () => {
-        const fileInput = document.getElementById('yesTriggerFileInput');
-        const uploadStatus = document.getElementById('uploadStatus');
+    
+    // ฟังก์ชันหลักสำหรับอัปโหลดและอัปเดต URL ในตารางใดๆ
+    window.uploadAudio = async (fileInputId, table, column, index_col, index_val, statusId) => {
+        const fileInput = document.getElementById(fileInputId);
+        const uploadStatus = document.getElementById(statusId);
         const file = fileInput.files[0];
 
-        if (!file) {
-            uploadStatus.className = 'error-text';
-            uploadStatus.textContent = 'กรุณาเลือกไฟล์ก่อนอัปโหลด';
-            return;
-        }
+        if (!file) { uploadStatus.className = 'error-text'; uploadStatus.textContent = 'กรุณาเลือกไฟล์ก่อนอัปโหลด'; return; }
         
-        if (!yesTriggerQ) {
-            uploadStatus.className = 'error-text';
-            uploadStatus.textContent = 'ไม่พบรายการ Yes Trigger ในฐานข้อมูล';
-            return;
-        }
-
         uploadStatus.className = 'loading-text';
         uploadStatus.textContent = `⏳ กำลังอัปโหลดไฟล์ ${file.name}...`;
 
         const fileExtension = file.name.split('.').pop();
-        const path = `customer_audio/s4_trigger_${uuidv4()}.${fileExtension}`; 
+        const sectionPrefix = table.split('_')[1] || 'generic';
+        const path = `customer_audio/${sectionPrefix}/${sectionPrefix}_${index_val}_${uuidv4()}.${fileExtension}`; 
 
         try {
             // 5.1 Upload file to Supabase Storage
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('responses') // ใช้ bucket 'responses' ที่คุณตั้งไว้
+            const { error: uploadError } = await supabase.storage
+                .from('responses') 
                 .upload(path, file, { upsert: true });
-
             if (uploadError) throw uploadError;
 
             // 5.2 Get Public URL
             const { data: { publicUrl } } = supabase.storage.from('responses').getPublicUrl(path);
 
             // 5.3 Update URL in the Database table
+            const updateObject = {};
+            updateObject[column] = publicUrl;
+            
             const { error: updateError } = await supabase
-                .from('health_questions_s4')
-                .update({ yes_trigger_url: publicUrl })
-                .eq('id', yesTriggerQ.id);
+                .from(table)
+                .update(updateObject)
+                .eq(index_col, index_val);
 
             if (updateError) throw updateError;
 
@@ -328,8 +554,19 @@
         } catch (err) {
             console.error('Upload or Update error:', err);
             uploadStatus.className = 'error-text';
-            uploadStatus.textContent = `❌ ข้อผิดพลาด: ${err.message}. โปรดตรวจสอบ Bucket name และ RLS policies.`;
+            uploadStatus.textContent = `❌ ข้อผิดพลาด: ${err.message}. โปรดตรวจสอบ Bucket name และ RLS policies (ต้องมี policy INSERT/UPDATE/SELECT/DELETE สำหรับ anon).`;
         }
+    };
+    
+    // ฟังก์ชันพิเศษสำหรับ Q4 Yes Trigger (ใช้ฟังก์ชันหลัก uploadAudio)
+    window.uploadYesTriggerAudio = async () => {
+        if (!yesTriggerQ) {
+             document.getElementById('uploadStatus').className = 'error-text';
+             document.getElementById('uploadStatus').textContent = 'ไม่พบรายการ Yes Trigger ในฐานข้อมูล';
+             return;
+        }
+        // เรียกใช้ฟังก์ชันหลัก: uploadAudio(fileInputId, table, column, index_col, index_val, statusId)
+        await window.uploadAudio('yesTriggerFileInput', 'health_questions_s4', 'yes_trigger_url', 'id', yesTriggerQ.id, 'uploadStatus');
     };
 
     // --- Initialize ---
