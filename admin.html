@@ -315,13 +315,13 @@
         switchTab('config'); 
     };
 
-    // --- 2. ฟังก์ชันดึงข้อมูลทั้งหมด (READ) - ใช้ .cs() ---
+    // --- 2. ฟังก์ชันดึงข้อมูลทั้งหมด (READ) - ใช้ .filter('product_type', 'cs', arrayFilter) ---
     const fetchAllData = async () => {
         statusElement.textContent = `กำลังโหลดข้อมูลสำหรับผลิตภัณฑ์: ${currentEditingProduct.toUpperCase()}...`;
         statusElement.className = 'loading-text';
 
         try {
-            // 🚨 CRITICAL FIX: สร้างตัวกรอง Array Contains
+            // 🚨 CRITICAL FIX 1: สร้างตัวกรอง Array Contains
             // Format: {product_id, all}
             const arrayFilter = `{${currentEditingProduct}, all}`; 
 
@@ -330,76 +330,73 @@
             if (cError) throw cError;
             configData = cData;
 
-            // 2.1 S1 - ใช้ .cs()
-            // 🚨 FIX: ใช้ statusElement แทน window.loadingText
+            // 2.1 S1 - ใช้ .filter('product_type', 'cs', arrayFilter)
             statusElement.textContent = `กำลังดึง S1...`; 
             const { data: s1Data, error: s1Error } = await supabase.from('customer_replies_s1')
                 .select('*')
-                .cs('product_type', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
                 .order('turn_index', { ascending: true });
             if (s1Error) throw s1Error;
             s1FilesData = s1Data;
             
-            // 2.2 S2 - ใช้ .cs()
-            // 🚨 FIX: ใช้ statusElement แทน window.loadingText
+            // 2.2 S2 - ใช้ .filter()
             statusElement.textContent = `กำลังดึง S2...`;
             const { data: s2Data, error: s2Error } = await supabase.from('questions_s2')
                 .select('*')
-                .cs('product_type', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
                 .order('q_index', { ascending: true });
             if (s2Error) throw s2Error;
             s2QuestionsData = s2Data;
 
-            // 2.3 S3 - ใช้ .cs()
-            // 🚨 FIX: ใช้ statusElement แทน window.loadingText
+            // 2.3 S3 - ใช้ .filter()
             statusElement.textContent = `กำลังดึง S3...`;
             const { data: s3Data, error: s3Error } = await supabase.from('objections_s3')
                 .select('*')
-                .cs('product_type', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
                 .order('ob_index', { ascending: true });
             if (s3Error) throw s3Error;
             s3ObjectionsData = s3Data;
             
-            // 2.4 S4 - Health Questions - ใช้ .cs()
-            // 🚨 FIX: ใช้ statusElement แทน window.loadingText
+            // 2.4 S4 - Health Questions - ใช้ .filter()
             statusElement.textContent = `กำลังดึง S4 Questions...`;
             const { data: qData, error: qError } = await supabase.from('health_questions_s4')
                 .select('*')
-                .cs('product_type', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
                 .order('q_index', { ascending: true });
             if (qError) throw qError;
             healthQuestionsData = qData;
             
-            yesTriggerQ = qData.find(q => q.is_yes_trigger && (Array.isArray(q.product_type) ? q.product_type.includes(currentEditingProduct) : q.product_type === currentEditingProduct)) || 
-                          qData.find(q => q.is_yes_trigger && (Array.isArray(q.product_type) ? q.product_type.includes('all') : q.product_type === 'all')) || 
+            // NOTE: Logic การหา yesTriggerQ ต้องรองรับทั้ง Array และ String 
+            const checkProductType = (pt) => Array.isArray(pt) ? pt.includes(currentEditingProduct) : pt === currentEditingProduct;
+            const checkAll = (pt) => Array.isArray(pt) ? pt.includes('all') : pt === 'all';
+
+            yesTriggerQ = qData.find(q => q.is_yes_trigger && checkProductType(q.product_type)) || 
+                          qData.find(q => q.is_yes_trigger && checkAll(q.product_type)) || 
                           null;
             
-            // 2.5 S4 - Follow Up Names - ใช้ .cs()
-            // 🚨 FIX: ใช้ statusElement แทน window.loadingText
+            // 2.5 S4 - Follow Up Names - ใช้ .filter()
             statusElement.textContent = `กำลังดึง S4 Follow Up Names...`;
             const { data: fuData, error: fuError } = await supabase.from('s4_follow_up_names')
                 .select('*')
-                .cs('product_type', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
                 .order('step_index', { ascending: true });
             if (fuError) throw fuError;
             followUpNamesData = fuData;
             
-            // 2.6 S4 - Follow Up Replies - ใช้ .cs()
-            // 🚨 FIX: ใช้ statusElement แทน window.loadingText
+            // 2.6 S4 - Follow Up Replies - ใช้ .filter()
             statusElement.textContent = `กำลังดึง S4 Follow Up Replies...`;
             const { data: furData, error: furError } = await supabase.from('s4_follow_up_replies')
                 .select('*')
-                .cs('product_type', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
                 .order('step_index', { ascending: true });
             if (furError) throw furError;
             followUpRepliesData = furData;
 
-            // 2.7 S5 - ใช้ .cs()
-            // 🚨 FIX: ใช้ statusElement แทน window.loadingText
+            // 2.7 S5 - ใช้ .filter()
             statusElement.textContent = `กำลังดึง S5...`;
             const { data: s5Data, error: s5Error } = await supabase.from('scripts_s5')
                 .select('*')
-                .cs('product_type', arrayFilter)
+                .filter('product_type', 'cs', arrayFilter) // <--- FIXED: ใช้ .filter() + 'cs'
                 .order('step_index', { ascending: true });
             if (s5Error) throw s5Error;
             s5StepsData = s5Data;
