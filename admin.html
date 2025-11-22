@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>Admin Panel: Health Simulator Content</title>
+    <title>Admin Panel: จัดการเนื้อหาแบบทดสอบ</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
         body { 
@@ -176,9 +176,11 @@
         <label for="productSelector" style="font-weight: bold;">เลือกผลิตภัณฑ์ที่ต้องการแก้ไข:</label>
         <select id="productSelector" onchange="switchProduct()" style="padding: 8px; border-radius: 4px; margin-left: 10px;">
             <option value="health">ประกันสุขภาพ (health)</option>
-            <option value="life">ประกันชีวิต (life)</option>
+            <option value="life1">ประกันชีวิต 1 (life1)</option>
+            <option value="life2">ประกันชีวิต 2 (life2)</option>
+            <option value="retirement">บำนาญ (retirement)</option>
             <option value="all">เนื้อหาที่ใช้ร่วมกัน (all)</option>
-            </select>
+        </select>
     </div>
 
     <div class="status-bar">
@@ -319,6 +321,7 @@
     // --- 2. ฟังก์ชันดึงข้อมูลทั้งหมด (READ) ---
     const fetchAllData = async () => {
         statusElement.textContent = `กำลังโหลดข้อมูลสำหรับผลิตภัณฑ์: ${currentEditingProduct.toUpperCase()}...`;
+        statusElement.className = 'loading-text';
 
         try {
             // สร้างตัวกรองร่วม: ดึงข้อมูลที่ตรงกับ Product ID ปัจจุบัน หรือที่มีค่าเป็น 'all' (ตัวเล็ก)
@@ -469,11 +472,63 @@
         list.innerHTML += `<button onclick="updateS3Text()" class="save-button">💾 บันทึกการแก้ไขข้อความโต้แย้ง S3</button>`;
     };
     
+    // 🚨 FUNCTION ที่ขาดหายไป: RENDER S4
+    const renderS4 = () => {
+        // 4.1 Health Questions (Q4List)
+        const q4List = document.getElementById('q4List');
+        q4List.innerHTML = '';
+        healthQuestionsData.forEach(q => {
+            // กรองเฉพาะ Q ที่ตรงกับ Product ที่เลือก หรือเป็น All
+            if (q.product_type !== currentEditingProduct && q.product_type !== 'all') return;
+            
+            const isTrigger = q.is_yes_trigger ? ' (TRIGGER Q)' : '';
+            q4List.innerHTML += `
+                <div class="item-row" data-id="${q.id}">
+                    <strong>Q${q.q_index} [${q.product_type.toUpperCase()}]${isTrigger}</strong>
+                    <label>ข้อความคำถาม:</label>
+                    <textarea id="q4_text_${q.id}" rows="2">${q.q_text || ''}</textarea>
+                </div>
+            `;
+        });
+        
+        // 4.2 Yes Trigger Display (yesTriggerUrlDisplay, yesTriggerAudio)
+        const yesTriggerDisplay = document.getElementById('yesTriggerUrlDisplay');
+        const yesTriggerAudio = document.getElementById('yesTriggerAudio');
+        
+        if (yesTriggerQ) {
+            yesTriggerDisplay.textContent = yesTriggerQ.yes_trigger_url || 'N/A';
+            yesTriggerAudio.src = yesTriggerQ.yes_trigger_url || '';
+            document.getElementById('uploadStatus').textContent = ''; // Reset status
+        } else {
+             yesTriggerDisplay.textContent = 'ไม่พบคำถาม Yes Trigger ที่กำหนดไว้สำหรับผลิตภัณฑ์นี้';
+             yesTriggerAudio.src = '';
+        }
+
+        // 4.3 Follow-up Names (fuNamesList)
+        const fuNamesList = document.getElementById('fuNamesList');
+        fuNamesList.innerHTML = '';
+        followUpNamesData.forEach(f => {
+             // กรองเฉพาะ Q ที่ตรงกับ Product ที่เลือก หรือเป็น All
+            if (f.product_type !== currentEditingProduct && f.product_type !== 'all') return;
+
+            fuNamesList.innerHTML += `
+                <div class="item-row" data-id="${f.id}">
+                    <strong>Follow-up Step ${f.step_index} [${f.product_type.toUpperCase()}]:</strong>
+                    <label>ชื่อคำถามซักประวัติ:</label>
+                    <input type="text" id="fu_name_${f.id}" value="${f.step_name || ''}">
+                </div>
+            `;
+        });
+    };
+    
     // S4 & Follow-up Rendering
     const renderFUReplies = () => {
         const list = document.getElementById('fuRepliesList');
         list.innerHTML = '';
         followUpRepliesData.forEach(r => {
+             // กรองเฉพาะ Q ที่ตรงกับ Product ที่เลือก หรือเป็น All
+            if (r.product_type !== currentEditingProduct && r.product_type !== 'all') return;
+            
             const uploadId = `fu_reply_upload_${r.id}`;
             list.innerHTML += `
                 <div class="item-row" data-id="${r.id}">
@@ -492,6 +547,9 @@
         const list = document.getElementById('s5List');
         list.innerHTML = '';
         s5StepsData.forEach(s => {
+             // กรองเฉพาะ Q ที่ตรงกับ Product ที่เลือก หรือเป็น All
+            if (s.product_type !== currentEditingProduct && s.product_type !== 'all') return;
+            
             const uploadId = `s5_upload_${s.id}`;
             list.innerHTML += `
                 <div class="item-row" data-id="${s.id}">
@@ -515,8 +573,8 @@
         renderS1();
         renderS2();
         renderS3();
-        renderS4(); // Handles Q4List, FuNamesList, YesTriggerDisplay
-        renderFUReplies(); // 4.4
+        renderS4(); // <--- ตอนนี้ฟังก์ชันถูกนิยามแล้ว
+        renderFUReplies(); 
         renderS5();
     };
     
@@ -671,7 +729,7 @@
     window.uploadYesTriggerAudio = async () => {
         if (!yesTriggerQ) {
              document.getElementById('uploadStatus').className = 'error-text';
-             document.getElementById('uploadStatus').textContent = 'ไม่พบรายการ Yes Trigger ในฐานข้อมูล';
+             document.getElementById('uploadStatus').textContent = 'ไม่พบรายการ Yes Trigger ที่กำหนดไว้สำหรับผลิตภัณฑ์นี้ในฐานข้อมูล';
              return;
         }
         // เรียกใช้ฟังก์ชันหลัก: uploadAudio(fileInputId, table, column, index_col, index_val, statusId, product)
@@ -680,6 +738,11 @@
 
     // --- Initialize ---
     document.addEventListener('DOMContentLoaded', () => {
+        // 🚨 FIX: อ่าน Product ID จาก Local Storage ที่ถูกบันทึกไว้ใน index.html ล่าสุด
+        const selectedProduct = localStorage.getItem('roleplaySelectedProduct') || 'health'; 
+        document.getElementById('productSelector').value = selectedProduct;
+        currentEditingProduct = selectedProduct;
+        
         renderTabMenu();
         fetchAllData();
     });
