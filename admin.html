@@ -279,6 +279,7 @@
     };
     
     // --- Utility Function to Check Array Containment (Defined Once) ---
+    // 🚨 FIXED: ฟังก์ชันนี้ถูกประกาศไว้ที่นี่เท่านั้น
     const filterDataForUpdate = (data) => {
         return data.filter(item => {
             const pt = item.product_type;
@@ -289,7 +290,14 @@
         });
     };
     
-    // --- Tab Management (FIXED: Force Render on Switch) ---
+    // --- Tab Management (FIXED: Force Render on Switch & Global Scope Exposure) ---
+    
+    // 🚨 FIXED: switchProduct ต้องถูกเปิดเผยสู่ Global Scope เพื่อให้ HTML attribute onchange เรียกได้
+    window.switchProduct = () => {
+        currentEditingProduct = document.getElementById('productSelector').value;
+        fetchAllData(); 
+    };
+
     const switchTab = (tabName) => {
         tabSections.forEach(section => {
             const content = document.querySelector(`[data-tab="${section}"]`);
@@ -318,11 +326,6 @@
         });
     };
     
-    window.switchProduct = () => {
-        currentEditingProduct = document.getElementById('productSelector').value;
-        fetchAllData(); 
-    };
-
     const renderTabMenu = () => {
         const tabMenu = document.getElementById('tabMenu');
         tabMenu.innerHTML = '';
@@ -354,7 +357,7 @@
             statusElement.textContent = `กำลังดึง S1...`; 
             const { data: s1Data, error: s1Error } = await supabase.from('customer_replies_s1')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // 🚨 ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('turn_index', { ascending: true });
             if (s1Error) throw s1Error;
             s1FilesData = s1Data;
@@ -363,7 +366,7 @@
             statusElement.textContent = `กำลังดึง S2...`; 
             const { data: s2Data, error: s2Error } = await supabase.from('questions_s2')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // 🚨 ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('q_index', { ascending: true });
             if (s2Error) throw s2Error;
             s2QuestionsData = s2Data;
@@ -372,7 +375,7 @@
             statusElement.textContent = `กำลังดึง S3...`; 
             const { data: s3Data, error: s3Error } = await supabase.from('objections_s3')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // 🚨 ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('ob_index', { ascending: true });
             if (s3Error) throw s3Error;
             s3ObjectionsData = s3Data;
@@ -381,7 +384,7 @@
             statusElement.textContent = `กำลังดึง S4 Questions...`; 
             const { data: qData, error: qError } = await supabase.from('health_questions_s4')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // 🚨 ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('q_index', { ascending: true });
             if (qError) throw qError;
             healthQuestionsData = qData;
@@ -397,7 +400,7 @@
             statusElement.textContent = `กำลังดึง S4 Follow Up Names...`; 
             const { data: fuData, error: fuError } = await supabase.from('s4_follow_up_names')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // 🚨 ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('step_index', { ascending: true });
             if (fuError) throw fuError;
             followUpNamesData = fuData;
@@ -406,7 +409,7 @@
             statusElement.textContent = `กำลังดึง S4 Follow Up Replies...`; 
             const { data: furData, error: furError } = await supabase.from('s4_follow_up_replies')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // 🚨 ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('step_index', { ascending: true });
             if (furError) throw furError;
             followUpRepliesData = furData;
@@ -415,7 +418,7 @@
             statusElement.textContent = `กำลังดึง S5...`; 
             const { data: s5Data, error: s5Error } = await supabase.from('scripts_s5')
                 .select('*')
-                .filter('product_type', 'cs', arrayFilter) // 🚨 ใช้ .filter() + 'cs'
+                .filter('product_type', 'cs', arrayFilter)
                 .order('step_index', { ascending: true });
             if (s5Error) throw s5Error;
             s5StepsData = s5Data;
@@ -440,7 +443,7 @@
         const productArray = Array.isArray(product) ? product : [product];
         const productForPath = productArray.includes(currentEditingProduct) 
             ? currentEditingProduct 
-            : productArray.find(p => p !== 'all') || 'all'; // 🚨 FIX: ใช้ค่าแรกที่ไม่ใช่ 'all' เป็น fallback
+            : productArray.find(p => p !== 'all') || 'all';
 
         return `
             <div class="upload-area">
@@ -645,16 +648,6 @@
     };
     
     // --- 4. ฟังก์ชันบันทึกข้อความ (UPDATE TEXT) ---
-
-    // Utility เพื่อกรองข้อมูลที่ถูกโหลดมาให้ตรงกับ Product ID ปัจจุบัน
-    const filterDataForUpdate = (data) => {
-        return data.filter(item => {
-            const pt = item.product_type;
-            const current = currentEditingProduct;
-            return (Array.isArray(pt) ? pt.includes(current) : pt === current) || 
-                   (Array.isArray(pt) ? pt.includes('all') : pt === 'all');
-        });
-    };
 
     // ********* CONFIG *********
     window.updateConfig = async () => {
