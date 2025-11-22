@@ -96,10 +96,10 @@
             <label for="testType">เลือกประเภทแบบทดสอบ:</label>
             <select id="testType" required>
                 <option value="">-- กรุณาเลือก --</option>
-                <option value="health">ประกันสุขภาพ (Health)</option>
-                <option value="life1">ประกันชีวิต 1 (Saving)</option>
-                <option value="life2">ประกันชีวิต 2</option>
-                <option value="retirement">บำนาญ (Retirement)</option>
+                <option value="health">ประกันสุขภาพ (health)</option>
+                <option value="life1">ประกันชีวิต 1 (life1)</option>
+                <option value="life2">ประกันชีวิต 2 (life2)</option>
+                <option value="retirement">บำนาญ (retirement)</option>
             </select>
         </div>
         
@@ -137,18 +137,15 @@
         };
         localStorage.setItem('roleplayUserData', JSON.stringify(userData));
         
-        // เก็บ Product ID ที่เลือก
+        // เก็บ Product ID ที่เลือก (life1, life2, retirement, health)
         localStorage.setItem('roleplaySelectedProduct', testType);
 
         // --- ตรรกะการนำทาง ---
-        // (เราจะใช้ index1.html สำหรับ Health และ index3.html สำหรับ Life Products)
         if (testType === 'health') {
-            window.location.href = 'index1.html';
+            window.location.href = 'index1.html'; // Health
         } 
-        // 🚨 หมายเหตุ: สำหรับ Life1, Life2, Retirement เราจะใช้โค้ด index3.html ตัวเดียว 
-        // โดยให้ index3.html อ่านค่า Product ID จาก Local Storage 
         else if (testType.startsWith('life') || testType === 'retirement') {
-            window.location.href = 'index3.html';
+            window.location.href = 'index3.html'; // Life Group Products
         } else {
             alert('ไม่พบการตั้งค่าสำหรับแบบทดสอบที่เลือก');
         }
