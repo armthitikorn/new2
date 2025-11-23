@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>E-Simulator Roleplay (ประกันบำนาญ - FIX: Retirement Only Filter)</title>
+    <title>E-Simulator Roleplay (ประกันบำนาญ - FIX: Retirement Only & S1 Missing Audio)</title>
     
     <style>
         /* [Style เดิม] */
@@ -306,7 +306,7 @@
         let audioCache = {};
         let selectedRandomFiles = []; 
         
-        // 🚨 CRITICAL FIX: เปลี่ยน Filter ให้ดึงเฉพาะ Retirement เท่านั้น
+        // 🚨 CRITICAL FIX: ฟังก์ชันกำหนดตัวกรอง Array Contains (ดึงเฉพาะ Retirement เท่านั้น)
         const getArrayFilter = function() {
             // ดึงเฉพาะ CURRENT_PRODUCT_ID (retirement)
             return [CURRENT_PRODUCT_ID];
@@ -318,13 +318,10 @@
             loadingText.textContent = `กำลังดึงข้อมูลการตั้งค่าจากฐานข้อมูลสำหรับผลิตภัณฑ์: ${CURRENT_PRODUCT_ID.toUpperCase()}...`;
 
             try {
-                // RLS CHECK: ต้องมั่นใจว่า Policy SELECT ของทุกตารางอนุญาตให้ role 'anon' เข้าถึงได้
                 const arrayFilter = getArrayFilter();
                 
-                // 1. ดึง Configuration (difficulty_config) - ไม่ต้องกรอง Product Type
-                const { data: configData, error: configError } = await supabase
-                    .from('difficulty_config')
-                    .select('*');
+                // 1. ดึง Configuration (difficulty_config)
+                const { data: configData, error: configError } = await supabase.from('difficulty_config').select('*');
                 if (configError) throw configError;
                 
                 configData.forEach(c => {
@@ -367,17 +364,15 @@
                 loadingText.textContent = `กำลังดึงข้อมูลคำถามสุขภาพ S4...`;
                 const { data: s4Data, error: s4Error } = await supabase
                     .from('health_questions_s4')
-                    .select('q_index, q_text, is_yes_trigger, yes_trigger_url, product_type') // <--- แก้ไขปัญหาคอลัมน์แล้ว
+                    .select('q_index, q_text, is_yes_trigger, yes_trigger_url, product_type') 
                     .overlaps('product_type', arrayFilter) // ดึงเฉพาะ Retirement
                     .order('q_index', { ascending: true });
                 if (s4Error) throw s4Error;
                 
                 globalS4Questions = s4Data.map(q => q.q_text);
                 
-                // หา Yes Trigger Q ที่ใช้สำหรับผลิตภัณฑ์นี้ (ต้องเป็น Retirement เท่านั้น)
                 const selectedTriggerQ = s4Data.find(q => q.is_yes_trigger && q.product_type.includes(CURRENT_PRODUCT_ID));
                                          
-                // 🚨 FIX: ใช้ชื่อโรค/เงื่อนไขทั่วไปแทน
                 selectedDisease = selectedTriggerQ ? {
                     name: 'เงื่อนไขสุขภาพบำนาญ', 
                     yes_trigger_url: selectedTriggerQ.yes_trigger_url || NO_ANSWER_URL,
@@ -750,12 +745,28 @@
             }
         }
         
-        // --- Section 1 Functions ---
+        // --- Section 1 Functions (แก้ไขให้จัดการไฟล์เสียงที่ขาดหาย) ---
         const endTurn = function() {
             if (turn < maxTurns) { 
                 turn++; turnSpan.textContent = turn; 
                 const fileToPlay = selectedRandomFiles[turn - 1]; 
                 const isFinalCustomerTurn = (turn === maxTurns);
+
+                if (!fileToPlay) {
+                    // 🚨 จัดการกรณีที่ไฟล์เสียงลูกค้าหายไป (เทิร์นที่ 3)
+                    s1StatusElement.textContent = `❌ ข้อผิดพลาด: ไม่พบไฟล์เสียงลูกค้าสำหรับเทิร์นที่ ${turn} กรุณาตรวจสอบ Supabase Tag!`;
+                    nextRoundBtn.disabled = true; 
+                    recordBtn.disabled = true; 
+                    if (turn === maxTurns) {
+                        nextRoundBtn.disabled = false; // ถ้าเป็นเทิร์นสุดท้าย ให้กดข้ามได้
+                    } else {
+                        // ถ้าไม่ใช่เทิร์นสุดท้าย แต่ไฟล์หาย ให้กดบันทึกเพื่อข้ามไปเทิร์นถัดไปได้
+                        recordBtn.textContent = '🎙️ เริ่มบันทึกเสียง (พนักงาน) (ข้าม)';
+                        recordBtn.disabled = false;
+                    }
+                    return;
+                }
+
                 s1StatusElement.textContent = `⏳ กำลังโหลดเสียงลูกค้า...`;
                 const audioEl = getCachedAudioElement(fileToPlay, true);
                 customerAudio = audioEl;
@@ -798,7 +809,7 @@ ${isFinalCustomerTurn ? 'กรุณากดปุ่ม "จบบทที�
             }
         }
 
-        // --- Section 1.5, 2, 3 Flow ---
+        // --- Section 1.5, 2, 3 Flow (ใช้ตรรกะเดิม) ---
         
         const initSection1_5 = function() {
             hideAllSections(); document.getElementById('section1_5Div').style.display = 'block'; 
@@ -890,13 +901,15 @@ ${isFinalCustomerTurn ? 'กรุณากดปุ่ม "จบบทที�
             };
         }
         
+        // startNextCloseRoundAuto logic is now embedded in toggleRecording(4) nextAutoAction
+        
+        
         // --- S4: Health Check Flow ---
         
         const initSection4 = function() {
             const selectedDifficulty = document.querySelector('input[name="difficulty"]:checked').value;
             maxH = globalConfig[selectedDifficulty.toLowerCase()]?.S4 || 0; 
             
-            // 🚨 ตรวจสอบว่ามีข้อมูล S4 และ SelectedDisease ที่ถูกกรองมาหรือไม่
             if (maxH === 0 || !selectedDisease || globalS4Questions.length === 0) {
                  alert(`จบบทที่ 3 แล้ว! ข้ามช่วงที่ 4 (คำถามสุขภาพ) เนื่องจากไม่มีการตั้งค่า/ไม่จำเป็นสำหรับ ${CURRENT_PRODUCT_ID.toUpperCase()} เริ่มช่วงที่ 5: ลงทะเบียนลูกค้า`);
                  initSection5();
