@@ -306,9 +306,9 @@
         let audioCache = {};
         let selectedRandomFiles = []; 
         
-        // 🚨 CRITICAL FIX: เปลี่ยน Filter จาก String Literal เป็น Array Literal
+        // 🚨 CRITICAL FIX: เปลี่ยน Filter จาก String Literal เป็น Array Literal เพื่อความเสถียร
         const getArrayFilter = function() {
-            // ใช้ Array Literal ['product_id', 'all'] ซึ่ง Supabase SDK จัดการได้ดีกว่า
+            // ใช้ Array Literal ['product_id', 'all'] 
             return [CURRENT_PRODUCT_ID, 'all'];
         };
         
@@ -364,10 +364,11 @@
                 globalS3Files = s3Data;
                 
                 // 5. ดึง S4 (health_questions_s4 - คำถามหลัก)
+                // 🚨 FINAL FIX: ลบคอลัมน์ disease_name ออกเพื่อแก้ปัญหา "column does not exist"
                 loadingText.textContent = `กำลังดึงข้อมูลคำถามสุขภาพ S4...`;
                 const { data: s4Data, error: s4Error } = await supabase
                     .from('health_questions_s4')
-                    .select('q_index, q_text, is_yes_trigger, yes_trigger_url, disease_name, product_type') 
+                    .select('q_index, q_text, is_yes_trigger, yes_trigger_url, product_type') // <--- แก้ไขตรงนี้
                     .overlaps('product_type', arrayFilter) 
                     .order('q_index', { ascending: true });
                 if (s4Error) throw s4Error;
@@ -377,8 +378,9 @@
                 const selectedTriggerQ = s4Data.find(q => q.is_yes_trigger && q.product_type.includes(CURRENT_PRODUCT_ID)) || 
                                          s4Data.find(q => q.is_yes_trigger && q.product_type.includes('all')); 
                 
+                // 🚨 FIX: ใช้ชื่อโรค/เงื่อนไขทั่วไปแทน เนื่องจากไม่ได้ดึงคอลัมน์ disease_name มา
                 selectedDisease = selectedTriggerQ ? {
-                    name: selectedTriggerQ.disease_name || 'โรคสำคัญ', 
+                    name: 'เงื่อนไขสุขภาพ', 
                     yes_trigger_url: selectedTriggerQ.yes_trigger_url || NO_ANSWER_URL,
                     q_text: selectedTriggerQ.q_text
                 } : null; 
@@ -422,8 +424,8 @@
                 
             } catch (error) {
                 console.error("Failed to fetch initial data:", error);
-                // 🚨 GUIDELINE: If 400 persists, check RLS Policies for SELECT access for 'anon' role on all tables above.
-                loadingText.textContent = `❌ ข้อผิดพลาดในการโหลดข้อมูล: ${error.message}. (โค้ดถูกแก้ไขแล้ว, โปรดตรวจสอบ RLS Policy ใน Supabase)`;
+                // 🚨 หากเกิดปัญหาอีกครั้ง (ที่ไม่ใช่ 42703), ปัญหาจะมาจาก RLS Policy หรือข้อมูลในตาราง
+                loadingText.textContent = `❌ ข้อผิดพลาดในการโหลดข้อมูล: ${error.message}. (โปรดตรวจสอบ RLS Policy และความถูกต้องของข้อมูลในตาราง S1-S5 ใน Supabase)`;
                 startTestBtn.disabled = true;
                 setTimeout(() => { loadingOverlay.style.display = "none"; }, 3000);
                 return false;
@@ -687,7 +689,7 @@
                 part = 4; 
                 const baseNum = currentHIndex + 1; 
                 qNum = baseNum * 10 + followUpStep; 
-                qText = `S4: ซักประวัติ ${selectedDisease ? selectedDisease.name : 'โรคสำคัญ'} Q${baseNum}.F${followUpStep}: ${currentFNameS4}`;
+                qText = `S4: ซักประวัติ ${selectedDisease ? selectedDisease.name : 'เงื่อนไขสุขภาพ'} Q${baseNum}.F${followUpStep}: ${currentFNameS4}`;
                 statusElement = hStatusElement; buttonElement = followUpQBtn; nextAutoAction = playFixedFollowUpQuestion; originalButtonText = `🎙️ บันทึกคำถามซักประวัติ Q${followUpStep}`;
             } 
             else if (type === 6) { 
@@ -940,7 +942,8 @@ ${isFinalCustomerTurn ? 'กรุณากดปุ่ม "จบบทที�
                     hStatusElement.textContent = `❌ เล่นอัตโนมัติถูกบล็อก: ${error.message}. กรุณากดปุ่ม "🎙️ 1. บันทึกคำถามสุขภาพ" อีกครั้งเพื่อ "ปลดบล็อก" การเล่นเสียง`;
                     answerHBtn.disabled = false; audioEl.onended = null; return;
                 });
-                const replyText = isYes ? `ใช่ (โรค: ${selectedDisease.name})` : `ไม่เคยค่ะ/ครับ`;
+                // 🚨 FIX: ใช้ 'เงื่อนไขสุขภาพ' เป็นชื่อโรค/เงื่อนไขทั่วไป
+                const replyText = isYes ? `ใช่ (เงื่อนไข: ${selectedDisease.name})` : `ไม่เคยค่ะ/ครับ`; 
                 hStatusElement.textContent = `🔊 กำลังเล่นคำตอบลูกค้า: "${replyText}"...`;
             };
             
