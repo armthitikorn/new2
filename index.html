@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบทดสอบการขายประกัน</title>
+    <!-- Bootstrap CSS -->
+    https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css
+    <!-- Google Font -->
+    https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap
+    <!-- Font Awesome -->
+    https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: #f4f6f9;
+        }
+        .header {
+            background: linear-gradient(135deg, #007bff, #00c6ff);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+        }
+        .quiz-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .btn-custom {
+            background: #007bff;
+            color: white;
+            font-weight: 600;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-custom:hover {
+            background: #0056b3;
+        }
+        .btn-custom i {
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1>แบบทดสอบการขายประกันผ่านโทรศัพท์</h1>
+        <p>ทดสอบทักษะการโน้มน้าวใจและตอบข้อโต้แย้ง</p>
+    </header>
+
+    <div class="container my-5">
+        <div class="quiz-card">
+            <h4 class="mb-3">คำถามที่ 1</h4>
+            <p>หากลูกค้าบอกว่า “ขอคิดดูก่อน” คุณควรตอบอย่างไร?</p>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="q1" id="q1a">
+                <label class="form-check-label" for="q1a">ยืนยันให้ลูกค้าตัดสินใจทันที</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="q1" id="q1b">
+                <label class="form-check-label" for="q1b">เสนอข้อมูลเพิ่มเติมเพื่อช่วยตัดสินใจ</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="q1" id="q1c">
+                <label class="form-check-label" for="q1c">บอกว่าจะโทรกลับภายหลัง</label>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <!-- ปุ่มบันทึกพร้อมไอคอนหูโทรศัพท์ -->
+            <button class="btn btn-custom px-4 py-2">
+                <i class="fas fa-phone"></i> บันทึกคำตอบ
+            </button>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js
+</body>
+</html>
