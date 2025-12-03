@@ -1,92 +1,85 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แบบทดสอบการขายประกัน</title>
-    <!-- Bootstrap CSS -->
-    https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css
-    <!-- Google Font -->
-    https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel    body {
-            font-family: 'Prompt', sans-serif;
-            background: #f4f6f9;
-        }
-        .header {
-            background: linear-gradient(135deg, #007bff, #00c6ff);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            border-radius: 0 0 20px 20px;
-        }
-        .quiz-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .btn-custom {
-            background: #007bff;
-            color: white;
-            font-weight: 600;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-        }
-        .btn-custom i {
-            font-size: 18px;
-            transition: transform 0.3s ease;
-        }
-        /* เอฟเฟกต์เมื่อ Hover */
-        .btn-custom:hover {
-            background: #0056b3;
-            box-shadow: 0 6px 15px rgba(0, 91, 187, 0.4);
-            transform: translateY(-2px);
-        }
-        .btn-custom:hover i {
-            transform: rotate(20deg);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบโทรออกจำลองขั้นเทพ</title>
+https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css
+<style>
+    body { font-family: 'Prompt', sans-serif; text-align: center; padding: 30px; background: #f4f6f9; }
+    .btn-phone {
+        background: #28a745;
+        color: white;
+        font-size: 20px;
+        padding: 15px 30px;
+        border-radius: 50px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .btn-phone:hover { background: #218838; box-shadow: 0 6px 15px rgba(40,167,69,0.4); }
+    .btn-phone i { font-size: 24px; }
+    .conversation { margin-top: 30px; }
+    .option-btn {
+        background: #007bff;
+        color: white;
+        padding: 10px 20px;
+        margin: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .option-btn:hover { background: #0056b3; }
+</style>
 </head>
 <body>
 
-    <header class="header">
-        <h1>แบบทดสอบการขายประกันผ่านโทรศัพท์</h1>
-        <p>ทดสอบทักษะการโน้มน้าวใจและตอบข้อโต้แย้ง</p>
-    </header>
+<h1>ระบบโทรออกจำลองขั้นเทพ</h1>
+<button class="btn-phone" onclick="startCall()">
+    <i class="fas fa-phone"></i> โทรออก
+</button>
 
-    <div class="container my-5">
-        <div class="quiz-card">
-            <h4 class="mb-3">คำถามที่ 1</h4>
-            <p>หากลูกค้าบอกว่า “ขอคิดดูก่อน” คุณควรตอบอย่างไร?</p>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="q1" id="q1a">
-                <label class="form-check-label" for="q1a">ยืนยันให้ลูกค้าตัดสินใจทันที</label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="q1" id="q1b">
-                <label class="form-check-label" for="q1b">เสนอข้อมูลเพิ่มเติมเพื่อช่วยตัดสินใจ</label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="q1" id="q1c">
-                <label class="form-check-label" for="q1c">บอกว่าจะโทรกลับภายหลัง</label>
-            </div>
-        </div>
+<audio id="dialTone" src="v class="conversation" id="conversation" style="display:none;">
+    <h3>เลือกคำตอบของคุณ:</h3>
+    <button class="option-btn" onclick="reply('สวัสดีค่ะ สนใจประกันสุขภาพไหมคะ?')">เสนอขายประกัน</button>
+    <button class="option-btn" onclick="reply('ถ้าคุณตัดสินใจวันนี้จะได้รับสิทธิพิเศษค่ะ')">โน้มน้าวใจ</button>
+    <button class="option-btn" onclick="reply('ขอบคุณค่ะ ไว้โอกาสหน้าค่ะ')">ปิดการขาย</button>
+</div>
 
-        <div class="text-center">
-            <!-- ปุ่มบันทึกพร้อมไอคอนหูโทรศัพท์ -->
-            <button class="btn btn-custom px-4 py-2">
-                <i class="fas fa-phone"></i> บันทึกคำตอบ
-            </button>
-        </div>
-    </div>
+<script>
+function startCall() {
+    const dialTone = document.getElementById('dialTone');
+    dialTone.play();
 
-    <!-- Bootstrap JS -->
-    https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js</script>
+    dialTone.onended = () => {
+        speak('สวัสดีค่ะ มีอะไรให้ช่วยคะ?'); // ลูกค้ารับสาย
+        document.getElementById('conversation').style.display = 'block';
+    };
+}
+
+function reply(text) {
+    speak(text); // พนักงานพูด
+    setTimeout(() => {
+        // ลูกค้าตอบกลับอัตโนมัติ
+        const responses = [
+            'ขอคิดดูก่อนนะคะ',
+            'ไม่สะดวกตอนนี้ค่ะ',
+            'สนใจค่ะ แต่ขอรายละเอียดเพิ่ม'
+        ];
+        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        speak(randomResponse);
+    }, 2000);
+}
+
+function speak(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'th-TH'; // ภาษาไทย
+    utterance.rate = 1; // ความเร็ว
+    speechSynthesis.speak(utterance);
+}
+</script>
+
 </body>
 </html>
