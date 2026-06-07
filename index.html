@@ -13,7 +13,7 @@
         th { background-color: #f8f9fa; }
         .pass { color: #28a745; font-weight: bold; }
         .fail { color: #dc3545; font-weight: bold; }
-        .fast { color: #ffc107; font-weight: bold; } /* สีเหลืองสำหรับจับตาดูคนทำเร็ว */
+        .fast { color: #ffc107; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -23,36 +23,52 @@
     <input type="text" id="searchInput" placeholder="ค้นหาชื่อพนักงาน..." onkeyup="filterTable()">
     
     <table>
-<thead>
-    <tr>
-        <th>ชื่อพนักงาน</th>
-        <th>ชุดที่</th>
-        <th>วันที่</th> <th>คะแนน</th>
-        <th>สถานะ</th>
-        <th>เวลาที่ใช้</th>
-    </tr>
-</thead>
-
-function renderTable(data) {
-    const tbody = document.getElementById('resultsTableBody');
-    tbody.innerHTML = '';
-    data.forEach(row => {
-        // แปลงเวลาจากฐานข้อมูลเป็นวันที่ (DD/MM/YYYY)
-        const dateObj = new Date(row.end_time);
-        const dateStr = dateObj.toLocaleDateString('th-TH'); // แสดงวันที่แบบไทย
-
-        tbody.innerHTML += `
+        <thead>
             <tr>
-                <td>${row.user_name}</td>
-                <td>${row.set_id}</td>
-                <td>${dateStr}</td> 
-                <td>${row.score}/60</td>
-                <td>${row.is_passed ? '✅ ผ่าน' : '❌ ไม่ผ่าน'}</td>
-                <td>${row.duration_minutes} นาที</td>
+                <th>ชื่อพนักงาน</th>
+                <th>ชุดที่</th>
+                <th>วันที่</th>
+                <th>คะแนน</th>
+                <th>สถานะ</th>
+                <th>เวลาที่ใช้</th>
             </tr>
-        `;
-    });
-}
+        </thead>
+        <tbody id="resultsTableBody">
+            </tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
+    const _supabase = supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_ANON_KEY');
+    let allAttempts = [];
+
+    async function loadResults() {
+        const { data } = await _supabase.from('attempts').select('*').order('end_time', { ascending: false });
+        allAttempts = data || [];
+        renderTable(allAttempts);
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('resultsTableBody');
+        tbody.innerHTML = '';
+        data.forEach(row => {
+            const dateObj = new Date(row.end_time);
+            const dateStr = dateObj.toLocaleDateString('th-TH');
+            const timeClass = (row.duration_minutes < 5) ? 'fast' : '';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${row.user_name}</td>
+                    <td>${row.set_id}</td>
+                    <td>${dateStr}</td> 
+                    <td>${row.score}/60</td>
+                    <td>${row.is_passed ? '<span class="pass">ผ่าน</span>' : '<span class="fail">ไม่ผ่าน</span>'}</td>
+                    <td class="${timeClass}">${row.duration_minutes || 0} นาที</td>
+                </tr>
+            `;
+        });
+    }
 
     function filterTable() {
         const query = document.getElementById('searchInput').value.toLowerCase();
