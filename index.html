@@ -1,719 +1,80 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
-    <title>E-Simulator Roleplay (Final Fixed)</title>
-    
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - สรุปผลสอบ</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap');
-        body { 
-            font-family: 'Sarabun', sans-serif;
-            padding: 20px; 
-            text-align: center; 
-            background-color: #f4f7f6;
-            -webkit-text-size-adjust: 100%;
-        }
-        .container-box {
-            max-width: 700px; 
-            margin: 0 auto; 
-            padding: 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-        }
-        h1 { font-size: 28px; color: #d9534f; margin-bottom: 20px; }
-        h2 { margin-top: 25px; font-size: 22px; color: #337ab7; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        
-        button { 
-            margin: 10px 5px;
-            padding: 12px 20px; 
-            font-size: 16px; 
-            cursor: pointer; 
-            width: 100%; 
-            max-width: 300px;
-            min-height: 50px;
-            border: none;
-            border-radius: 8px;
-            transition: background-color 0.2s, transform 0.1s;
-            touch-action: manipulation;
-        }
-        button:active { transform: scale(0.98); }
-        button:hover:not(:disabled) { opacity: 0.9; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; background-color: #ccc !important; color: #666 !important; }
-        
-        #finalSaveBtn { background-color: #007bff; color: white; font-weight: bold; }
-        #finalSaveBtn.done { background-color: #28a745; }
-        
-        .retry-audio-btn {
-            background-color: #ffc107 !important;
-            color: #333 !important;
-            border: 2px solid #e0a800 !important;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-
-        .form-control {
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            width: 100%;
-            max-width: 400px;
-            box-sizing: border-box;
-            margin-top: 5px;
-            text-align: center;
-            font-size: 16px;
-            background-color: #fff;
-        }
-
-        .difficulty-option {
-            display: inline-block;
-            margin: 5px;
-            cursor: pointer;
-            padding: 10px 15px;
-            border: 2px solid #ccc;
-            border-radius: 20px;
-            transition: all 0.2s;
-            font-size: 14px;
-        }
-        input[type="radio"]:checked + .difficulty-option {
-            background-color: #337ab7; color: white; border-color: #337ab7; font-weight: bold;
-        }
-        input[type="radio"] { display: none; }
-        
-        #loadingOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.9); color: white; display: none; 
-            justify-content: center; align-items: center; flex-direction: column;
-            z-index: 9999; text-align: center; font-size: 18px;
-        }
-        .progress { width: 80%; max-width: 300px; margin-top: 20px; height: 10px; background-color: #333; border-radius: 5px; overflow: hidden; }
-        .progress-bar { height: 100%; background-color: #28a745; transition: width 0.3s ease; }
-        
-        #certificate { border: 5px solid #333; padding: 20px; width: 90%; max-width: 600px; margin: 40px auto; text-align: center; display: none; background: #fff; }
-
-        @media (max-width: 600px) {
-            .container-box { padding: 15px; margin: 10px; width: auto; }
-            h1 { font-size: 24px; }
-            button { width: 100%; margin: 8px 0; }
-        }
+        body { font-family: 'Tahoma', sans-serif; padding: 20px; background-color: #f4f7f6; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { color: #333; }
+        input { width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
+        th { background-color: #f8f9fa; }
+        .pass { color: #28a745; font-weight: bold; }
+        .fail { color: #dc3545; font-weight: bold; }
+        .fast { color: #ffc107; font-weight: bold; } /* สีเหลืองสำหรับจับตาดูคนทำเร็ว */
     </style>
 </head>
 <body>
+
+<div class="container">
+    <h2>สรุปผลการสอบพนักงาน</h2>
+    <input type="text" id="searchInput" placeholder="ค้นหาชื่อพนักงาน..." onkeyup="filterTable()">
     
-    <div id="loadingOverlay">
-        <div class="spinner-border" style="width: 3rem; height: 3rem; border: 4px solid white; border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-        <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-        <h5 id="loadingText" class="mt-3">กำลังเตรียมระบบ...</h5>
-        <div class="progress"><div id="uploadProgressBar" class="progress-bar" style="width: 0%"></div></div>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>ชื่อพนักงาน</th>
+                <th>ชุดที่</th>
+                <th>คะแนน</th>
+                <th>สถานะ</th>
+                <th>เวลาที่ใช้ (นาที)</th>
+            </tr>
+        </thead>
+        <tbody id="resultsTableBody"></tbody>
+    </table>
+</div>
 
-    <div class="container-box">
-        <h1>📱 E-Simulator (Mobile Optimized)</h1>
-        
-        <div id="registrationSection">
-            <h2 style="color: #333;">1. ลงทะเบียน</h2>
-            
-            <div style="margin-bottom: 15px;">
-                <input type="text" class="form-control" id="inputUserName" placeholder="ชื่อ-นามสกุล / รหัสพนักงาน" required>
-            </div>
-            
-            <div style="margin-bottom: 15px;">
-                <select class="form-control" id="inputProductType" required>
-                    <option value="">-- เลือกแบบประกัน --</option>
-                    <option value="health">ประกันสุขภาพ (Health)</option>
-                    <option value="saving1">ประกันสะสมทรัพย์ 1 (Saving1)</option>
-                    <option value="saving2">ประกันสะสมทรัพย์ 2 (Saving2)</option> 
-                    <option value="retirement">ประกันบำนาญ (Retirement)</option>
-                </select>
-            </div>
-            
-            <div style="margin-bottom: 15px;">
-                <select class="form-control" id="inputUserGroup" required>
-                    <option value="">-- เลือกกลุ่มผู้เข้าอบรม --</option>
-                    <option value="ฝ่ายขาย">ฝ่ายขาย (Sales)</option>
-                    <option value="ฝ่าย Agent">ฝ่าย Agent</option>
-                    <option value="ฝ่ายเทรนเนอร์">ฝ่ายเทรนเนอร์ (Trainer)</option>
-                    <option value="ฝ่ายอื่นๆ">ฝ่ายอื่นๆ</option>
-                </select>
-            </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
+    const _supabase = supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_ANON_KEY');
+    let allAttempts = [];
 
-            <div style="margin-bottom: 20px;">
-                <p style="font-weight: bold; margin-bottom: 5px;">ระดับพนักงาน:</p>
-                <div>
-                    <input type="radio" id="diffEasy" name="difficulty" value="เนอสเซอรี่" checked>
-                    <label for="diffEasy" class="difficulty-option">เนอสเซอรี่</label>
-                    <input type="radio" id="diffHard" name="difficulty" value="นิวไลซิ่งสตาร์">
-                    <label for="diffHard" class="difficulty-option">นิวไลซิ่งสตาร์</label>
-                    <input type="radio" id="diffHarder" name="difficulty" value="รีเจ้นท์">
-                    <label for="diffHarder" class="difficulty-option">รีเจ้นท์</label>
-                </div>
-            </div>
-            
-            <button id="startTestBtn" style="background-color: #28a745; color: white;">
-                ▶️ เริ่มทำแบบทดสอบ
-            </button>
-        </div>
-        
-        <div id="testSection" style="display: none;">
-            
-            <audio id="mainAudioPlayer" playsinline preload="auto"></audio>
+    async function loadResults() {
+        // ดึงข้อมูลเรียงตามเวลาที่ทำล่าสุด
+        const { data } = await _supabase.from('attempts').select('*').order('end_time', { ascending: false });
+        allAttempts = data;
+        renderTable(allAttempts);
+    }
 
-            <div id="section1Div">
-                <h2>🗣️ ช่วงที่ 1: เปิดตัว (<span id="turnSpan">1</span>/<span id="maxTurnSpan">5</span>)</h2>
-                <button id="recordBtn" style="background-color: #007bff; color: white;">🎙️ เริ่มบันทึกเสียง</button>
-                <div id="manualPlayContainer_S1" style="display:none; margin-top:10px;"></div>
-                <button disabled id="nextRoundBtn">✅ จบบทที่ 1 (ไปต่อ)</button>
-                <p id="status" style="margin-top: 10px; color: #666;">รอเริ่ม...</p>
-                <hr>
-            </div>
+    function renderTable(data) {
+        const tbody = document.getElementById('resultsTableBody');
+        tbody.innerHTML = '';
+        data.forEach(row => {
+            // จับผิด: ถ้าทำเสร็จในเวลาไม่ถึง 5 นาที ให้ขึ้นสีเหลืองเตือน
+            const timeClass = (row.duration_minutes < 5) ? 'fast' : '';
+            const timeText = (row.duration_minutes < 5) ? `⚠️ ${row.duration_minutes} นาที` : `${row.duration_minutes} นาที`;
 
-            <div id="section1_5Div" style="display: none;">
-                <h2>🛒 ช่วงที่ 1.5: นำเสนอ (Pitch)</h2>
-                <button disabled id="pitchRecordBtn">🎙️ บันทึกเสียงนำเสนอ</button>
-                <button disabled id="nextSection2Btn">✅ จบบทที่ 1.5 (ไปต่อ)</button>
-                <p id="pitchStatus">รอเริ่ม...</p>
-                <hr>
-            </div>
+            tbody.innerHTML += `
+                <tr>
+                    <td>${row.user_name}</td>
+                    <td>${row.set_id}</td>
+                    <td>${row.score}/60</td>
+                    <td>${row.is_passed ? '<span class="pass">ผ่าน</span>' : '<span class="fail">ไม่ผ่าน</span>'}</td>
+                    <td class="${timeClass}">${timeText}</td>
+                </tr>
+            `;
+        });
+    }
 
-            <div id="section2Div" style="display: none;">
-                <h2>❓ ช่วงที่ 2: ตอบคำถาม (Q <span id="qRound">1</span>/<span id="maxQSpan">10</span>)</h2>
-                <button disabled id="startQBtn">🔊 ฟังคำถามลูกค้า</button>
-                <div id="manualPlayContainer_S2" style="display:none; margin-top:10px;"></div>
-                <button disabled id="answerBtn">🎙️ บันทึกคำตอบ</button>
-                <button disabled id="nextSection3Btn">✅ จบบทที่ 2</button>
-                <p id="qStatus">รอเริ่ม...</p>
-                <hr>
-            </div>
-
-            <div id="section3Div" style="display: none;">
-                <h2>💰 ช่วงที่ 3: ปิดการขาย (<span id="cRound">1</span>/<span id="maxCSpan">5</span>)</h2>
-                <button disabled id="closeBtn">🎙️ 1. สคริปต์ปิดการขาย</button>
-                <div id="manualPlayContainer_S3" style="display:none; margin-top:10px;"></div>
-                <button disabled id="replyBtn">🎙️ 2. ตอบข้อโต้แย้ง</button>
-                <button disabled id="nextSection4Btn">✅ จบบทที่ 3</button>
-                <p id="cStatus">รอเริ่ม...</p>
-                <hr>
-            </div>
-
-            <div id="section4Div" style="display: none;">
-                <h2>🏥 ช่วงที่ 4: สุขภาพ (<span id="hQName">Q1</span>)</h2>
-                <div id="healthQuestionDisplay" style="margin: 15px 0; padding: 15px; border: 1px dashed #d9534f; background-color: #ffeaea; border-radius: 8px;"></div>
-                <div id="manualPlayContainer_S4" style="display:none; margin-top:10px;"></div>
-                <button disabled id="answerHBtn">🎙️ บันทึกคำถาม</button>
-                <button disabled id="nextSection5Btn">✅ จบบทที่ 4</button>
-                <p id="hStatus">รอเริ่ม...</p>
-                <hr>
-            </div>
-
-            <div id="section5Div" style="display: none;">
-                <h2>🤝 ช่วงที่ 5: ลงทะเบียน (<span id="aRound">1</span>/<span id="maxASpan">7</span>)</h2>
-                <div id="registrationStepsDisplay" style="text-align: left; margin: 10px 0; padding: 10px; border: 1px solid #ccc; background-color: #f8f9fa; border-radius: 8px;">
-                    <ol id="stepList" style="padding-left: 20px; font-size: 15px;"></ol>
-                </div>
-                <div id="manualPlayContainer_S5" style="display:none; margin-top:10px;"></div>
-                <button disabled id="answerABtn">🎙️ บันทึกขั้นตอน 1</button> 
-                <button disabled id="finalSaveBtn">💾 บันทึกผลสอบ</button>
-                <p id="aStatus">รอเริ่ม...</p>
-                <hr>
-            </div>
-
-            <div id="certificate">
-                <h1>ใบประกาศนียบัตร</h1>
-                <p>ขอมอบให้แก่</p>
-                <h2 id="traineeName"></h2>
-                <p>ได้ผ่านการทดสอบหลักสูตร</p>
-                <p><strong>การขายประกันทางโทรศัพท์ (Simulator)</strong></p>
-                <p style="margin-top: 20px;">วันที่: <span id="issueDate"></span></p>
-            </div>
-            <button id="certBtn" style="display:none;">🎓 ดูใบประกาศ</button>
-        </div>
-    </div>
-
-    <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-        import { v4 as uuidv4 } from 'https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/esm-browser/index.js';
-
-        // --- Config & State ---
-        const supabaseUrl = 'https://wzwyotzzxycqfwercakh.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno'; 
-        window.supabase = createClient(supabaseUrl, supabaseKey);
-
-        let mediaRecorder = null;
-        let audioChunks = [];
-        const USER_ID_KEY = 'roleplay_user_id';
-        let currentUserId = localStorage.getItem(USER_ID_KEY) || uuidv4();
-        localStorage.setItem(USER_ID_KEY, currentUserId);
-        
-        let allRecordings = []; 
-        let lastCustomerAudioUrl = 'N/A';
-        let selectedProductType = ''; 
-        
-        let turn = 0, qRound = 0, cRound = 0, currentHIndex = 0, followUpStep = 0, aRound = 0;
-        let isFollowUpMode = false;
-        let maxTurns, maxQ, maxC, maxH, maxFollowUp = 5, maxA; 
-        
-        let globalConfig = {}, globalS1Files = {}, globalS2Files = {}, globalS3Files = {}, globalS4Questions = {}, globalS4FollowUpNames = {}, globalS4FollowUpReplies = {}, globalS5Steps = {};
-        let selectedRandomFiles = []; 
-        
-        // --- Utility: Unlock Audio for iOS ---
-        const unlockAudioContext = () => {
-            const audio = document.getElementById('mainAudioPlayer');
-            if(audio) {
-                audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAGZGF0YQQAAAAAAA=='; 
-                audio.play().then(() => {
-                    console.log('🔊 Audio Unlocked');
-                    audio.pause();
-                    audio.currentTime = 0;
-                }).catch(e => console.log('Audio unlock failed (normal if no user gesture yet)'));
-            }
-        };
-
-        // --- Data Fetching ---
-        const fetchInitialData = async function() {
-            document.getElementById('loadingOverlay').style.display = "flex";
-            try {
-                const { data: configData } = await window.supabase.from('difficulty_config').select('*');
-                configData.forEach(c => globalConfig[c.difficulty_level] = { S1: c.max_s1, S2: c.max_s2, S3: c.max_s3, S4: c.max_s4, S5: c.max_s5 });
-                
-                const fetchAndGroup = async (tableName, keyField, groupStore) => {
-                    const { data, error } = await window.supabase.from(tableName).select('*').order(keyField, { ascending: true });
-                    if (error) throw error;
-                    data.forEach(item => {
-                        (item.product_type || []).forEach(p => {
-                            const product = p.toLowerCase().trim();
-                            if (!groupStore[product]) groupStore[product] = [];
-                            groupStore[product].push(item);
-                        });
-                    });
-                };
-
-                await fetchAndGroup('customer_replies_s1', 'turn_index', globalS1Files);
-                await fetchAndGroup('questions_s2', 'q_index', globalS2Files);
-                await fetchAndGroup('objections_s3', 'ob_index', globalS3Files);
-                await fetchAndGroup('health_questions_s4', 'q_index', globalS4Questions);
-                await fetchAndGroup('s4_follow_up_names', 'step_index', globalS4FollowUpNames);
-                await fetchAndGroup('s4_follow_up_replies', 'step_index', globalS4FollowUpReplies);
-                await fetchAndGroup('scripts_s5', 'step_index', globalS5Steps);
-
-                document.getElementById('loadingOverlay').style.display = "none";
-                return true; 
-            } catch (error) { 
-                alert(`Error loading data: ${error.message}`); 
-                return false; 
-            }
-        }
-
-        const prepareTurnFiles = function() {
-            const diffRadios = document.getElementsByName('difficulty');
-            let diff = "easy";
-            for(let i=0; i<diffRadios.length; i++) { if(diffRadios[i].checked) diff = diffRadios[i].id === 'diffEasy' ? 'easy' : (diffRadios[i].id === 'diffHard' ? 'hard' : 'harder'); }
-
-            const max = globalConfig[diff]?.S1 || 5; 
-            let rawFiles = globalS1Files[selectedProductType] || [];
-            
-            const cleanFiles = rawFiles.filter(f => {
-                const tags = f.product_type || [];
-                if (selectedProductType === 'saving1' && tags.includes('saving2')) return false;
-                if (selectedProductType === 'saving2' && tags.includes('saving1')) return false;
-                return true;
-            });
-
-            selectedRandomFiles = [];
-            for (let i = 1; i < max; i++) {
-                const file = cleanFiles.find(f => f.turn_index === i && !f.is_finale);
-                selectedRandomFiles.push(file ? file.audio_url : null);
-            }
-            const finale = cleanFiles.find(f => f.is_finale);
-            selectedRandomFiles.push(finale ? finale.audio_url : null);
-        }
-
-        // --- Audio Player ---
-        const playAudio = (url, statusEl, btnToEnable, manualContainerId) => {
-            if (manualContainerId) document.getElementById(manualContainerId).innerHTML = '';
-            
-            if (!url) { 
-                statusEl.textContent = "⚠️ ไม่พบไฟล์เสียง (No Audio)"; 
-                if(btnToEnable) btnToEnable.disabled = false;
-                return; 
-            }
-
-            statusEl.textContent = "⏳ กำลังโหลดเสียง...";
-            const player = document.getElementById('mainAudioPlayer');
-            player.src = url;
-            
-            player.onended = () => {
-                lastCustomerAudioUrl = url;
-                statusEl.textContent = "✅ ฟังเสียงจบแล้ว";
-                if(btnToEnable) btnToEnable.disabled = false;
-                if(manualContainerId) document.getElementById(manualContainerId).style.display = 'none';
-            };
-
-            const attemptPlay = player.play();
-            if (attemptPlay !== undefined) {
-                attemptPlay.then(() => {
-                    statusEl.textContent = "🔊 กำลังเล่นเสียงลูกค้า...";
-                }).catch(error => {
-                    console.warn("Auto-play blocked:", error);
-                    statusEl.textContent = "⚠️ กรุณากดปุ่มเพื่อฟังเสียง";
-                    if (manualContainerId) {
-                        const container = document.getElementById(manualContainerId);
-                        container.style.display = 'block';
-                        container.innerHTML = `
-                            <button class="retry-audio-btn" onclick="document.getElementById('mainAudioPlayer').play()">
-                                🔊 แตะเพื่อฟังเสียงลูกค้า
-                            </button>
-                        `;
-                    }
-                });
-            }
-        };
-
-        // --- Logic Flows ---
-        const endTurn = () => {
-            if (turn < maxTurns) {
-                turn++; document.getElementById("turnSpan").textContent = turn;
-                const isFinal = (turn === maxTurns);
-                const fileUrl = selectedRandomFiles[turn-1];
-                const nextBtn = isFinal ? document.getElementById("nextRoundBtn") : document.getElementById("recordBtn");
-                playAudio(fileUrl, document.getElementById("status"), nextBtn, 'manualPlayContainer_S1');
-                if(isFinal) document.getElementById("recordBtn").disabled = true;
-            }
-        }
-        
-        const initSection1_5 = () => {
-            document.getElementById('section1Div').style.display='none'; document.getElementById('section1_5Div').style.display='block';
-            document.getElementById('pitchRecordBtn').disabled=false; 
-            lastCustomerAudioUrl = 'S1.5 Pitch'; 
-            document.getElementById('pitchStatus').textContent = "✅ เริ่มช่วง 1.5 Pitch"; 
-        }
-
-        const initSection2 = () => {
-            document.getElementById('section1_5Div').style.display='none'; document.getElementById('section2Div').style.display='block';
-            document.getElementById('startQBtn').disabled=false; qRound=0; 
-            lastCustomerAudioUrl = 'S2 Start'; document.getElementById('qStatus').textContent = "กดปุ่มเพื่อฟังคำถาม"; 
-        }
-        
-        const playS2 = () => {
-            if (qRound >= maxQ) { 
-                document.getElementById('qStatus').textContent = "🎉 จบบทที่ 2"; 
-                document.getElementById('nextSection3Btn').disabled = false; return; 
-            }
-            qRound++; document.getElementById("qRound").textContent = qRound;
-            const file = (globalS2Files[selectedProductType] || []).find(f => f.q_index === qRound);
-            playAudio(file?.audio_url, document.getElementById("qStatus"), document.getElementById("answerBtn"), 'manualPlayContainer_S2');
-            if(qRound===1) document.getElementById("startQBtn").style.display = 'none';
-        }
-        
-        const initSection3 = () => {
-            document.getElementById('section2Div').style.display='none'; document.getElementById('section3Div').style.display='block';
-            document.getElementById('closeBtn').disabled=false; cRound=0; document.getElementById('closeBtn').style.display='block';
-            lastCustomerAudioUrl = 'S3 Start'; document.getElementById('cStatus').textContent = "เริ่มการปิดการขาย";
-        }
-
-        const playS3 = () => {
-            if (cRound >= maxC) { 
-                document.getElementById("cStatus").textContent = "🎉 จบบทที่ 3"; 
-                document.getElementById("nextSection4Btn").disabled = false; 
-                document.getElementById("replyBtn").disabled = true; 
-                document.getElementById("closeBtn").style.display='none'; return; 
-            }
-            cRound++; document.getElementById("cRound").textContent = cRound;
-            if(cRound===1) document.getElementById("closeBtn").style.display = 'none';
-            const file = (globalS3Files[selectedProductType] || []).find(f => f.ob_index === cRound);
-            playAudio(file?.audio_url, document.getElementById("cStatus"), document.getElementById("replyBtn"), 'manualPlayContainer_S3');
-        }
-        
-        const initSection4 = () => {
-            const isHealth = selectedProductType === 'health';
-            const diffRadios = document.getElementsByName('difficulty');
-            let diff = "easy";
-            for(let i=0; i<diffRadios.length; i++) { if(diffRadios[i].checked) diff = diffRadios[i].id === 'diffEasy' ? 'easy' : (diffRadios[i].id === 'diffHard' ? 'hard' : 'harder'); }
-            
-            maxH = isHealth ? (globalConfig[diff]?.S4 || 5) : 1;
-            document.getElementById('section3Div').style.display='none'; document.getElementById('section4Div').style.display='block';
-            currentHIndex=0; isFollowUpMode=false; followUpStep=0; updateS4UI(); 
-            document.getElementById('answerHBtn').disabled=false; document.getElementById('answerHBtn').style.display='block'; 
-            if(window.followUpQBtn) window.followUpQBtn.style.display='none';
-        }
-
-        const playS4 = () => {
-            document.getElementById('answerHBtn').disabled = true;
-            const isHealth = selectedProductType === 'health';
-            const isTrigger = isHealth ? (currentHIndex === 3) : (currentHIndex === 0);
-            const qList = globalS4Questions[selectedProductType] || [];
-            const currentQ = qList.find(q => q.q_index === (currentHIndex + 1));
-            const NO_ANSWER_URL = "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q3/health5_P1_P1Q3_1762340907852.webm"; 
-            
-            let url = NO_ANSWER_URL;
-            if (isTrigger && currentQ && currentQ.yes_trigger_url) url = currentQ.yes_trigger_url;
-            
-            const statusEl = document.getElementById("hStatus");
-            const player = document.getElementById('mainAudioPlayer');
-            player.src = url;
-            player.onended = () => {
-                if (isTrigger) {
-                    isFollowUpMode = true; followUpStep = 1; updateS4UI();
-                    statusEl.textContent = "เข้าสู่การซักประวัติ (Follow-up)";
-                    window.followUpQBtn.style.display = 'inline-block'; 
-                    document.getElementById('answerHBtn').style.display = 'none'; 
-                    window.followUpQBtn.disabled = false;
-                } else {
-                    currentHIndex++;
-                    if(currentHIndex < maxH) { updateS4UI(); statusEl.textContent = "ไปคำถามถัดไป"; document.getElementById('answerHBtn').disabled = false; }
-                    else { statusEl.textContent = "🎉 จบบทที่ 4"; document.getElementById('nextSection5Btn').disabled = false; }
-                }
-                document.getElementById('manualPlayContainer_S4').style.display = 'none';
-            };
-            player.play().catch(e => {
-                statusEl.textContent = "⚠️ แตะเพื่อฟังเสียง";
-                const cont = document.getElementById('manualPlayContainer_S4');
-                cont.style.display='block';
-                cont.innerHTML = `<button class="retry-audio-btn" onclick="document.getElementById('mainAudioPlayer').play()">🔊 แตะเพื่อฟังเสียงตอบรับ</button>`;
-            });
-        }
-
-        const playS4FollowUp = () => {
-            window.followUpQBtn.disabled = true;
-            const repliesList = globalS4FollowUpReplies[selectedProductType] || [];
-            const fileData = repliesList.find(f => f.step_index === followUpStep);
-            const player = document.getElementById('mainAudioPlayer');
-            const statusEl = document.getElementById("hStatus");
-            const handleFollowUpEnd = () => {
-                followUpStep++;
-                if (followUpStep > maxFollowUp) {
-                    isFollowUpMode = false; currentHIndex++;
-                    if(currentHIndex < maxH) { 
-                        updateS4UI(); window.followUpQBtn.style.display = 'none'; 
-                        document.getElementById('answerHBtn').style.display = 'inline-block'; 
-                        document.getElementById('answerHBtn').disabled = false; statusEl.textContent = "กลับสู่คำถามสุขภาพหลัก"; 
-                    } else { statusEl.textContent = "🎉 จบบทที่ 4"; window.followUpQBtn.style.display = 'none'; document.getElementById('nextSection5Btn').disabled = false; }
-                } else { updateS4UI(); window.followUpQBtn.disabled = false; statusEl.textContent = `พร้อมซักประวัติข้อ ${followUpStep}`; }
-                document.getElementById('manualPlayContainer_S4').style.display = 'none';
-            };
-            if (fileData && fileData.customer_audio_url) {
-                player.src = fileData.customer_audio_url;
-                statusEl.textContent = `🔊 กำลังเล่นเสียงซักประวัติข้อ ${followUpStep}...`;
-                player.onended = handleFollowUpEnd;
-                player.play().catch(e => {
-                    statusEl.textContent = "⚠️ แตะเพื่อฟังเสียง";
-                    const cont = document.getElementById('manualPlayContainer_S4');
-                    cont.style.display='block';
-                    cont.innerHTML = `<button class="retry-audio-btn" onclick="document.getElementById('mainAudioPlayer').play()">🔊 แตะเพื่อฟังเสียงตอบรับ</button>`;
-                });
-            } else { player.src = ""; setTimeout(handleFollowUpEnd, 1000); }
-        }
-        
-        const initSection5 = () => {
-            document.getElementById('section4Div').style.display='none'; document.getElementById('section5Div').style.display='block';
-            const diffRadios = document.getElementsByName('difficulty');
-            let diff = "easy";
-            for(let i=0; i<diffRadios.length; i++) { if(diffRadios[i].checked) diff = diffRadios[i].id === 'diffEasy' ? 'easy' : (diffRadios[i].id === 'diffHard' ? 'hard' : 'harder'); }
-            maxA = globalConfig[diff]?.S5 || 7; 
-            document.getElementById('maxASpan').textContent=maxA;
-            aRound=1; document.getElementById('aRound').textContent=1; renderRegistrationSteps(); updateStepHighlight(1);
-            document.getElementById('answerABtn').disabled=false; 
-            document.getElementById('answerABtn').textContent=`🎙️ บันทึกขั้นตอน 1`;
-        }
-
-        const playS5 = () => {
-            const step = (globalS5Steps[selectedProductType] || []).find(s => s.step_index === aRound);
-            const nextBtn = document.getElementById("answerABtn");
-            nextBtn.disabled = true;
-            const player = document.getElementById('mainAudioPlayer');
-            player.src = step?.customer_audio_url;
-            player.onended = () => {
-                lastCustomerAudioUrl = step?.customer_audio_url;
-                if (aRound >= maxA) { document.getElementById('aStatus').textContent = "🎉 เสร็จสิ้น!"; document.getElementById('finalSaveBtn').disabled = false; updateStepHighlight(99); }
-                else { aRound++; document.getElementById('aRound').textContent = aRound; updateStepHighlight(aRound); nextBtn.textContent = `🎙️ บันทึกขั้นตอนที่ ${aRound}`; nextBtn.disabled = false; }
-                document.getElementById('manualPlayContainer_S5').style.display = 'none';
-            };
-            player.play().catch(e => {
-                 document.getElementById('aStatus').textContent = "⚠️ แตะเพื่อฟังเสียง";
-                 const cont = document.getElementById('manualPlayContainer_S5');
-                 cont.style.display='block';
-                 cont.innerHTML = `<button class="retry-audio-btn" onclick="document.getElementById('mainAudioPlayer').play()">🔊 แตะเพื่อฟังเสียงตอบรับ</button>`;
-            });
-        }
-
-        // --- UI Updates ---
-        const updateS4UI = () => {
-            const d = document.getElementById('healthQuestionDisplay');
-            if (isFollowUpMode) {
-                const fList = globalS4FollowUpNames[selectedProductType] || [];
-                const fName = fList.find(f => f.step_index === followUpStep)?.step_name || `Q${followUpStep}`;
-                document.getElementById('hQName').textContent = `Follow-up ${followUpStep}`; 
-                d.innerHTML = `<p>ซักประวัติ: <strong>${fName}</strong></p>`;
-                window.followUpQBtn.textContent = `🎙️ บันทึกคำตอบซักประวัติ`;
-            } else if (currentHIndex < maxH) {
-                const qList = globalS4Questions[selectedProductType] || [];
-                const qText = qList.find(q => q.q_index === currentHIndex+1)?.q_text || `Q${currentHIndex+1}`;
-                document.getElementById('hQName').textContent = `Q${currentHIndex+1}`; 
-                d.innerHTML = `<p>คำถามหลัก: <strong>${qText}</strong></p>`;
-                document.getElementById('answerHBtn').textContent = `🎙️ บันทึกคำถามข้อ ${currentHIndex+1}`;
-            } else { d.innerHTML = "<p>✅ เสร็จสิ้น</p>"; }
-        }
-
-        const renderRegistrationSteps = () => {
-            const list = document.getElementById('stepList'); list.innerHTML = '';
-            (globalS5Steps[selectedProductType] || []).forEach((s,i) => {
-                const li = document.createElement('li'); li.id=`reg-step-${i+1}`; li.textContent=s.step_name; list.appendChild(li);
-            });
-        }
-        const updateStepHighlight = (step) => {
-            document.querySelectorAll('#stepList li').forEach(li => { li.style.fontWeight='normal'; li.style.color='#333'; });
-            const li = document.getElementById(`reg-step-${step}`); if(li){ li.style.fontWeight='bold'; li.style.color='#007bff'; }
-        }
-
-        // --- RECORDING ---
-        const toggleRecording = async (type) => {
-            let btn, status, nextAction, part, qNum, qText, url = lastCustomerAudioUrl;
-            
-            if (type===1) { btn=document.getElementById("recordBtn"); status=document.getElementById("status"); nextAction=endTurn; part=1; qNum=turn+1; qText=`S1 Turn ${qNum}`; }
-            else if (type===2) { btn=document.getElementById("answerBtn"); status=document.getElementById("qStatus"); nextAction=playS2; part=2; qNum=qRound; qText=`S2 Q${qNum}`; }
-            else if (type===3) { btn=document.getElementById("closeBtn"); status=document.getElementById("cStatus"); nextAction=playS3; part=3; qNum=0; qText=`S3 Closing`; url="SCRIPT"; }
-            else if (type===4) { btn=document.getElementById("replyBtn"); status=document.getElementById("cStatus"); nextAction=playS3; part=3; qNum=cRound; qText=`S3 Objection ${qNum}`; }
-            else if (type===5) { btn=document.getElementById("answerHBtn"); status=document.getElementById("hStatus"); nextAction=playS4; part=4; qNum=currentHIndex+1; qText=`S4 Q${qNum}`; }
-            else if (type===6) { btn=document.getElementById("answerABtn"); status=document.getElementById("aStatus"); nextAction=playS5; part=5; qNum=aRound; qText=`S5 Step ${qNum}`; }
-            else if (type===7) { btn=window.followUpQBtn; status=document.getElementById("hStatus"); nextAction=playS4FollowUp; part=4; qNum=(currentHIndex+1)*10+followUpStep; qText=`S4 FollowUp ${followUpStep}`; }
-            else if (type===8) { btn=document.getElementById("pitchRecordBtn"); status=document.getElementById("pitchStatus"); nextAction=() => { document.getElementById("nextSection2Btn").disabled=false; btn.disabled=true; }; part=15; qNum=1; qText="S1.5 Pitch"; url="SCRIPT"; }
-
-            if (!mediaRecorder || mediaRecorder.state === "inactive") {
-                try {
-                    unlockAudioContext();
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream); 
-                    audioChunks = [];
-                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                    mediaRecorder.onstop = () => {
-                        const blob = new Blob(audioChunks, { type: 'audio/webm' }); 
-                        allRecordings.push({ audioBlob: blob, part, qNum, qText, customerAudioUrl: url });
-                        status.textContent = "✅ บันทึกเสร็จแล้ว";
-                        btn.textContent = "🎙️ เริ่มบันทึก"; btn.disabled = true;
-                        stream.getTracks().forEach(t => t.stop());
-                        mediaRecorder = null;
-                        setTimeout(nextAction, 500); 
-                    };
-                    mediaRecorder.start();
-                    btn.textContent = "⏹️ หยุดบันทึก"; status.textContent = "🔴 กำลังบันทึกเสียง...";
-                } catch (e) { alert("Mic Error: " + e.message); }
-            } else { mediaRecorder.stop(); }
-        }
-
-        // --- UPDATED: uploadAll with Professional Database Mapping ---
-        const uploadAll = async () => {
-            document.getElementById('loadingOverlay').style.display = "flex";
-            document.getElementById('loadingText').textContent = "กำลังอัปโหลดไฟล์...";
-            
-            // 1. เตรียมข้อมูลพื้นฐานพนักงาน
-            const traineeName = document.getElementById("inputUserName").value;
-            const groupName = document.getElementById("inputUserGroup").value;
-            const staffLevel = document.querySelector('input[name="difficulty"]:checked').value;
-            
-            // 2. สร้าง Payload สำหรับ "แถวเดียว" (One Row per User)
-            let updatePayload = {
-                user_id: currentUserId,
-                name: traineeName,
-                user_group: groupName,
-                staff_level: staffLevel,
-                insurance_type: selectedProductType,
-                created_at: new Date()
-            };
-
-            let uploadCount = 0;
-            const totalToUpload = allRecordings.length;
-
-            for (let i = 0; i < totalToUpload; i++) {
-                const rec = allRecordings[i];
-                // กำหนดพิกัด Storage: userId / Step / UUID.webm
-                const fileName = `${currentUserId}/S${rec.part}/${uuidv4()}.webm`;
-                
-                const { error: upErr } = await window.supabase.storage.from('responses').upload(fileName, rec.audioBlob);
-                
-                if(!upErr) {
-                    const { data: { publicUrl } } = window.supabase.storage.from('responses').getPublicUrl(fileName);
-                    
-                    // --- หัวใจสำคัญ: Mapping ลิงก์เข้าคอลัมน์ SQL ตามที่ตกลงกันไว้ ---
-                    if (rec.part === 1) updatePayload.s1_audio_url = publicUrl;
-                    else if (rec.part === 15) updatePayload.s1_5_audio_url = publicUrl;
-                    else if (rec.part === 2) updatePayload.s2_audio_url = publicUrl;
-                    else if (rec.part === 3) updatePayload.s3_audio_url = publicUrl;
-                    else if (rec.part === 4) updatePayload.s4_audio_url = publicUrl;
-                    else if (rec.part === 5) updatePayload.s5_audio_url = publicUrl;
-                    
-                    uploadCount++;
-                }
-                // อัปเดต Progress Bar
-                document.getElementById('uploadProgressBar').style.width = `${((i + 1) / totalToUpload) * 100}%`;
-            }
-
-            // 3. บันทึก/อัปเดตลงตาราง submissions (ใช้ upsert เพื่อรวมเป็นแถวเดียว)
-            const { error: dbErr } = await window.supabase
-                .from('submissions')
-                .upsert([updatePayload], { onConflict: 'user_id' });
-
-            document.getElementById('loadingOverlay').style.display = "none";
-            
-            if(!dbErr) { 
-                document.getElementById("finalSaveBtn").textContent = "✅ เรียบร้อย"; 
-                document.getElementById('certificate').style.display = 'block';
-                document.getElementById('traineeName').textContent = traineeName;
-                document.getElementById('issueDate').textContent = new Date().toLocaleDateString('th-TH');
-                document.getElementById("certificate").scrollIntoView();
-            } else { 
-                alert("เกิดข้อผิดพลาดในการบันทึกฐานข้อมูล: " + dbErr.message); 
-                document.getElementById("finalSaveBtn").disabled = false; 
-            }
-        }
-
-        const startTest = function() {
-            const userName = document.getElementById('inputUserName').value.trim();
-            const inputProductType = document.getElementById('inputProductType').value; 
-            const inputUserGroup = document.getElementById('inputUserGroup').value;     
-            if (!userName || !inputUserGroup || !inputProductType) { alert("กรุณากรอกข้อมูลให้ครบถ้วน"); return; }
-            unlockAudioContext();
-            selectedProductType = inputProductType;
-            const diffRadios = document.getElementsByName('difficulty');
-            let diff = "easy";
-            for(let i=0; i<diffRadios.length; i++) { if(diffRadios[i].checked) diff = diffRadios[i].id === 'diffEasy' ? 'easy' : (diffRadios[i].id === 'diffHard' ? 'hard' : 'harder'); }
-            const config = globalConfig[diff];
-            maxTurns = config.S1; maxQ = config.S2; maxC = config.S3; maxH = config.S4; maxA = config.S5; 
-            maxFollowUp = globalS4FollowUpNames[selectedProductType] ? globalS4FollowUpNames[selectedProductType].length : 5;
-            document.getElementById("maxTurnSpan").textContent = maxTurns; document.getElementById("maxQSpan").textContent = maxQ;
-            document.getElementById("maxCSpan").textContent = maxC; document.getElementById("maxASpan").textContent = maxA; 
-            document.getElementById("registrationSection").style.display = 'none'; document.getElementById("testSection").style.display = 'block';
-            document.getElementById('section1Div').style.display = 'block';
-            if (!globalS1Files[selectedProductType]) { alert("❌ ไม่พบข้อมูล Product นี้"); return; }
-            prepareTurnFiles(); document.getElementById("status").textContent = `🎤 เริ่มต้น: แนะนำตัวกับลูกค้า (เทิร์น 1)`;
-        }
-
-        const init = async () => {
-            if (document.getElementById('nextSection5Btn')) {
-                window.followUpQBtn = document.createElement('button');
-                window.followUpQBtn.textContent = '🎙️ ซักประวัติ'; window.followUpQBtn.style.display = 'none';
-                window.followUpQBtn.className = 'btn-primary'; 
-                window.followUpQBtn.style.backgroundColor = '#17a2b8'; window.followUpQBtn.style.color = 'white';
-                document.getElementById('nextSection5Btn').parentNode.insertBefore(window.followUpQBtn, document.getElementById('nextSection5Btn'));
-            }
-            document.getElementById("startTestBtn").onclick = startTest;
-            document.getElementById("recordBtn").onclick = () => toggleRecording(1);
-            document.getElementById("nextRoundBtn").onclick = initSection1_5;
-            document.getElementById("pitchRecordBtn").onclick = () => toggleRecording(8);
-            document.getElementById("nextSection2Btn").onclick = initSection2;
-            document.getElementById("startQBtn").onclick = playS2;
-            document.getElementById("answerBtn").onclick = () => toggleRecording(2);
-            document.getElementById("nextSection3Btn").onclick = initSection3;
-            document.getElementById("closeBtn").onclick = () => toggleRecording(3);
-            document.getElementById("replyBtn").onclick = () => toggleRecording(4);
-            document.getElementById("nextSection4Btn").onclick = initSection4;
-            document.getElementById("answerHBtn").onclick = () => toggleRecording(5);
-            if(window.followUpQBtn) window.followUpQBtn.onclick = () => toggleRecording(7);
-            document.getElementById("nextSection5Btn").onclick = initSection5;
-            document.getElementById("answerABtn").onclick = () => toggleRecording(6);
-            document.getElementById("finalSaveBtn").onclick = uploadAll;
-            await fetchInitialData();
-        };
-        document.addEventListener('DOMContentLoaded', init);
-    </script>
+    function filterTable() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allAttempts.filter(item => item.user_name.toLowerCase().includes(query));
+        renderTable(filtered);
+    }
+    
+    loadResults();
+</script>
 </body>
 </html>
