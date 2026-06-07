@@ -7,7 +7,7 @@
         body { font-family: 'Tahoma', sans-serif; padding: 20px; background-color: #f4f7f6; }
         .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h2 { color: #333; }
-        input { width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        input { width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
         th { background-color: #f8f9fa; }
@@ -20,7 +20,7 @@
 
 <div class="container">
     <h2>สรุปผลการสอบพนักงาน</h2>
-    <input type="text" id="searchInput" placeholder="ค้นหาชื่อพนักงาน..." onkeyup="filterTable()">
+    <input type="text" id="searchInput" placeholder="กรองชื่อพนักงานเพื่อค้นหา..." onkeyup="filterTable()">
     
     <table>
         <thead>
@@ -34,7 +34,8 @@
             </tr>
         </thead>
         <tbody id="resultsTableBody">
-            </tbody>
+            <tr><td colspan="6">กำลังโหลดข้อมูล...</td></tr>
+        </tbody>
     </table>
 </div>
 
@@ -42,17 +43,33 @@
 <script>
     const supabaseUrl = 'https://wzwyotzzxycqfwercakh.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno'; 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+    let allAttempts = []; // ตัวแปรเก็บข้อมูลทั้งหมดไว้ที่หน่วยความจำเครื่อง
+
+    // 1. โหลดข้อมูลอัตโนมัติทันทีที่เปิดหน้าเว็บ
     async function loadResults() {
-        const { data } = await _supabase.from('attempts').select('*').order('end_time', { ascending: false });
+        const { data, error } = await supabase.from('attempts').select('*').order('end_time', { ascending: false });
+        
+        if (error) {
+            document.getElementById('resultsTableBody').innerHTML = `<tr><td colspan="6">Error: ${error.message}</td></tr>`;
+            return;
+        }
+
         allAttempts = data || [];
-        renderTable(allAttempts);
+        renderTable(allAttempts); // แสดงผลทั้งหมดเมื่อโหลดเสร็จ
     }
 
+    // 2. ฟังก์ชันวาดตาราง
     function renderTable(data) {
         const tbody = document.getElementById('resultsTableBody');
         tbody.innerHTML = '';
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6">ไม่พบข้อมูล</td></tr>';
+            return;
+        }
+
         data.forEach(row => {
             const dateObj = new Date(row.end_time);
             const dateStr = dateObj.toLocaleDateString('th-TH');
@@ -60,10 +77,10 @@
 
             tbody.innerHTML += `
                 <tr>
-                    <td>${row.user_name}</td>
-                    <td>${row.set_id}</td>
+                    <td>${row.user_name || '-'}</td>
+                    <td>${row.set_id || '-'}</td>
                     <td>${dateStr}</td> 
-                    <td>${row.score}/60</td>
+                    <td>${row.score || 0}/60</td>
                     <td>${row.is_passed ? '<span class="pass">ผ่าน</span>' : '<span class="fail">ไม่ผ่าน</span>'}</td>
                     <td class="${timeClass}">${row.duration_minutes || 0} นาที</td>
                 </tr>
@@ -71,12 +88,17 @@
         });
     }
 
+    // 3. ฟังก์ชันกรองข้อมูลในภายหลัง
     function filterTable() {
         const query = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = allAttempts.filter(item => item.user_name.toLowerCase().includes(query));
+        // กรองจากข้อมูลที่มีอยู่แล้วใน allAttempts ไม่ต้องไปดึงใหม่จาก server
+        const filtered = allAttempts.filter(item => 
+            (item.user_name && item.user_name.toLowerCase().includes(query))
+        );
         renderTable(filtered);
     }
     
+    // สั่งให้ทำงานทันที
     loadResults();
 </script>
 </body>
