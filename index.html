@@ -13,7 +13,6 @@
         th { background-color: #f8f9fa; }
         .pass { color: #28a745; font-weight: bold; }
         .fail { color: #dc3545; font-weight: bold; }
-        .fast { color: #ffc107; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -27,14 +26,13 @@
             <tr>
                 <th>ชื่อพนักงาน</th>
                 <th>ชุดที่</th>
-                <th>วันที่</th>
-                <th>คะแนน</th>
+                <th>วันที่/เวลา</th>
                 <th>สถานะ</th>
                 <th>เวลาที่ใช้</th>
             </tr>
         </thead>
         <tbody id="resultsTableBody">
-            <tr><td colspan="6">กำลังโหลดข้อมูล...</td></tr>
+            <tr><td colspan="5">กำลังโหลดข้อมูล...</td></tr>
         </tbody>
     </table>
 </div>
@@ -48,31 +46,41 @@
     let allAttempts = []; 
 
     async function loadResults() {
-        const { data, error } = await supabase.from('results').select('*').order('created_at', { ascending: false });
+        const tbody = document.getElementById('resultsTableBody');
+        const { data, error } = await supabase
+            .from('results')
+            .select('user_name, set_id, submitted_at, is_passed, duration_minutes')
+            .order('submitted_at', { ascending: false });
         
         if (error) { 
             console.error(error); 
-            document.getElementById('resultsTableBody').innerHTML = `<tr><td colspan="6">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
             return; 
         }
 
-        allAttempts = data || []; // <--- สำคัญ: ต้องเก็บ data ลงตัวแปรนี้
-        renderTable(allAttempts); // สั่งวาดตาราง
+        allAttempts = data || [];
+        renderTable(allAttempts);
     }
 
-    // สร้างฟังก์ชัน renderTable กลับมาเพื่อให้กรองข้อมูลได้
     function renderTable(data) {
         const tbody = document.getElementById('resultsTableBody');
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5">ไม่พบข้อมูล</td></tr>`;
+            return;
+        }
+
         tbody.innerHTML = data.map(row => {
-            const isSuspicious = (row.score >= 50 && row.duration_minutes < 2);
+            const duration = row.duration_minutes || 0;
+            const isSuspicious = (duration < 2); 
+            const dateStr = row.submitted_at ? new Date(row.submitted_at).toLocaleString('th-TH') : '-';
+
             return `
                 <tr style="${isSuspicious ? 'background-color: #ffe6e6;' : ''}">
                     <td>${row.user_name || '-'}</td>
                     <td>${row.set_id || '-'}</td>
-                    <td>${new Date(row.created_at).toLocaleDateString('th-TH')}</td>
-                    <td>${row.score || 0}</td>
+                    <td>${dateStr}</td>
                     <td class="${row.is_passed ? 'pass' : 'fail'}">${row.is_passed ? 'ผ่าน' : 'ไม่ผ่าน'}</td>
-                    <td>${row.duration_minutes || 0} นาที ${isSuspicious ? '⚠️' : ''}</td>
+                    <td>${duration} นาที ${isSuspicious ? '⚠️' : ''}</td>
                 </tr>
             `;
         }).join('');
@@ -83,7 +91,7 @@
         const filtered = allAttempts.filter(item => 
             item.user_name && item.user_name.toLowerCase().includes(query)
         );
-        renderTable(filtered); // วาดตารางใหม่ด้วยข้อมูลที่กรองแล้ว
+        renderTable(filtered);
     }
     
     loadResults();
