@@ -45,43 +45,47 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno'; 
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    let allAttempts = []; // ตัวแปรเก็บข้อมูลทั้งหมดไว้ที่หน่วยความจำเครื่อง
+    let allAttempts = []; 
 
-    // 1. โหลดข้อมูลอัตโนมัติทันทีที่เปิดหน้าเว็บ
-async function loadResults() {
-        // เปลี่ยนจาก 'attempts' เป็น 'results' ให้ตรงกับตารางจริงที่คุณใช้งาน
+    async function loadResults() {
         const { data, error } = await supabase.from('results').select('*').order('created_at', { ascending: false });
         
-        if (error) { console.error(error); return; }
+        if (error) { 
+            console.error(error); 
+            document.getElementById('resultsTableBody').innerHTML = `<tr><td colspan="6">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
+            return; 
+        }
 
+        allAttempts = data || []; // <--- สำคัญ: ต้องเก็บ data ลงตัวแปรนี้
+        renderTable(allAttempts); // สั่งวาดตาราง
+    }
+
+    // สร้างฟังก์ชัน renderTable กลับมาเพื่อให้กรองข้อมูลได้
+    function renderTable(data) {
         const tbody = document.getElementById('resultsTableBody');
         tbody.innerHTML = data.map(row => {
-            // ตรวจสอบการทุจริต: คะแนนสูง + เวลาต่ำกว่า 2 นาที
             const isSuspicious = (row.score >= 50 && row.duration_minutes < 2);
             return `
                 <tr style="${isSuspicious ? 'background-color: #ffe6e6;' : ''}">
-                    <td>${row.user_name}</td>
-                    <td>${row.set_id}</td>
-                    <td>${new Date(row.created_at).toLocaleDateString()}</td>
-                    <td>${row.score}</td>
+                    <td>${row.user_name || '-'}</td>
+                    <td>${row.set_id || '-'}</td>
+                    <td>${new Date(row.created_at).toLocaleDateString('th-TH')}</td>
+                    <td>${row.score || 0}</td>
                     <td class="${row.is_passed ? 'pass' : 'fail'}">${row.is_passed ? 'ผ่าน' : 'ไม่ผ่าน'}</td>
-                    <td>${row.duration_minutes} นาที ${isSuspicious ? '⚠️' : ''}</td>
+                    <td>${row.duration_minutes || 0} นาที ${isSuspicious ? '⚠️' : ''}</td>
                 </tr>
             `;
         }).join('');
     }
 
-    // 3. ฟังก์ชันกรองข้อมูลในภายหลัง
     function filterTable() {
         const query = document.getElementById('searchInput').value.toLowerCase();
-        // กรองจากข้อมูลที่มีอยู่แล้วใน allAttempts ไม่ต้องไปดึงใหม่จาก server
         const filtered = allAttempts.filter(item => 
-            (item.user_name && item.user_name.toLowerCase().includes(query))
+            item.user_name && item.user_name.toLowerCase().includes(query)
         );
-        renderTable(filtered);
+        renderTable(filtered); // วาดตารางใหม่ด้วยข้อมูลที่กรองแล้ว
     }
     
-    // สั่งให้ทำงานทันที
     loadResults();
 </script>
 </body>
